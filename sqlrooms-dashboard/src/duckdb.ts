@@ -7,10 +7,14 @@ export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
   if (conn) return conn;
 
   try {
-    console.log('[DUCKDB] Loading bundles...');
-    const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-    const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-    console.log('[DUCKDB] Bundle selected:', bundle.mainWorker);
+    console.log('[DUCKDB] Loading local bundles...');
+    // Use local files instead of CDN to avoid CORS issues with Workers
+    const bundle: duckdb.DuckDBBundle = {
+      mainModule: '/duckdb/duckdb-eh.wasm',
+      mainWorker: '/duckdb/duckdb-browser-eh.worker.js',
+      pthreadWorker: null,
+    };
+    console.log('[DUCKDB] Bundle configured:', bundle.mainWorker);
 
     const worker = new Worker(bundle.mainWorker!);
     const logger = new duckdb.ConsoleLogger();
