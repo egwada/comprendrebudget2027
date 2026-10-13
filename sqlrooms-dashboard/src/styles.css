@@ -397,6 +397,15 @@ p { line-height: 1.6; }
 .tbl .sort-btn { border: 0; padding: 6px; background: transparent; color: var(--blue); font-weight: 700; }
 .mission-link { border: 0; background: transparent; text-align: left; color: var(--blue); text-decoration: underline; padding: 4px; }
 .tbl tfoot td, .tbl tfoot th { background: #f6f6fa; padding: 12px; font-weight: 700; }
+.mission-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.mission-facts dt { color: var(--muted); font-size: 14px; }
+.mission-facts dd { margin: 6px 0; font-weight: 700; font-size: 18px; }
+.expert-data { margin-top: 16px; }
+.export-btn { margin: 12px 0; }
+button:disabled { cursor: not-allowed; opacity: .6; }
+details { margin: 18px 0; }
+summary { cursor: pointer; padding: 8px; color: var(--blue); font-weight: 700; }
+pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 980px) { .grid-2 { grid-template-columns: 1fr; } }
 @media (max-width: 600px) {
   .page { padding: 12px 12px 32px; }

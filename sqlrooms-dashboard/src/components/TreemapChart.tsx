@@ -59,10 +59,6 @@ export default function TreemapChart({ data, total, onSelect }: Props) {
             nameKey="mission"
             stroke="#fff"
             content={<Cell onSelect={onSelect} />}
-            onClick={(n: any) => {
-              const name = n?.payload?.mission ?? n?.mission ?? n?.name;
-              if (name) onSelect(name);
-            }}
             isAnimationActive={false}
           >
             <Tooltip

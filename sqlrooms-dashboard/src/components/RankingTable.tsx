@@ -34,7 +34,7 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
       <caption>Crédits prévus par {kind === 'missions' ? 'mission' : 'programme'} — montants en euros (Md€ : milliards ; M€ : millions). La part porte sur {kind === 'missions' ? 'le total affiché' : 'le total imprimé de la mission'}.</caption>
       <thead><tr>{cols.map(([key, label]) => <th scope="col" key={key} aria-sort={key === sortKey ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}><button className="sort-btn" onClick={() => toggle(key)}>{label}{key === sortKey ? dir === 'desc' ? ' ↓' : ' ↑' : ''}</button></th>)}<th scope="col">Source PDF</th></tr></thead>
       <tbody>{rows.map((r) => <tr key={r.mission}>
-        <th scope="row" className="name-cell">{onSelect ? <button className="mission-link" onClick={() => onSelect(r.mission)}>{r.mission}</button> : r.mission}</th>
+        <th scope="row" className="name-cell">{onSelect ? <button id={`table-${r.mission}`} className="mission-link" onClick={() => onSelect(r.mission)}>{r.mission}</button> : r.mission}</th>
         <td className="num">{fmtEUR(r.y2026)}</td><td className="num"><b>{fmtEUR(r.y2027)}</b></td><td className="num">{change(r)}</td>
         <td className="num">{r.share.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %</td>
         <td className="num">{r.source_pages?.split(', ').map((p, i) => <span key={p}>{i > 0 ? ', ' : ''}<a href={`/sources/l17b3210_projet-loi.pdf#page=${p}`} target="_blank" rel="noreferrer" aria-label={`PLF 2027, page ${p}, nouvel onglet`}>p. {p}</a></span>)}</td>

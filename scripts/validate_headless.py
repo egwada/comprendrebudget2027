@@ -112,7 +112,7 @@ class Browser:
         raise RuntimeError(f'Délai dépassé : {expression}')
 
     def click(self, selector):
-        if not self.js(f"(() => {{ const e = document.querySelector({json.dumps(selector)}); if (!e) return false; e.click(); return true; }})()"):
+        if not self.js(f"(() => {{ const e = document.querySelector({json.dumps(selector)}); if (!e) return false; if (e.click) e.click(); else e.dispatchEvent(new MouseEvent('click', {{bubbles:true}})); return true; }})()"):
             raise RuntimeError(f'Élément absent : {selector}')
         time.sleep(.15)
 
@@ -121,13 +121,18 @@ class Browser:
         time.sleep(.15)
 
     def key(self, key, code=None, **extra):
-        params = {'key': key, 'code': code or key, **extra}
-        self.command('Input.dispatchKeyEvent', {'type': 'keyDown', **params})
+        codes = {'Enter': 13, 'Tab': 9, ' ': 32, 'Escape': 27}
+        params = {'key': key, 'code': code or key, 'windowsVirtualKeyCode': codes.get(key, 0), **extra}
+        self.command('Input.dispatchKeyEvent', {'type': 'keyDown', 'text': '\r' if key == 'Enter' else ' ' if key == ' ' else '', **params})
         self.command('Input.dispatchKeyEvent', {'type': 'keyUp', **params})
         time.sleep(.15)
 
     def close(self):
         if self.ws:
+            try:
+                self.command('Browser.close')
+            except Exception:
+                pass
             self.ws.close()
         self.proc.terminate()
         try:
@@ -135,7 +140,12 @@ class Browser:
         except subprocess.TimeoutExpired:
             self.proc.kill()
             self.proc.wait()
-        self.profile.cleanup()
+        for _ in range(30):
+            try:
+                self.profile.cleanup()
+                break
+            except OSError:
+                time.sleep(.1)
 
 
 def run_ui_checks(browser, exp):
@@ -172,6 +182,41 @@ def run_ui_checks(browser, exp):
     check('recherche vide', b.js("document.querySelector('.empty')?.innerText.includes('Aucune mission')"))
     b.click('.reset-btn')
     check('réinitialisation', b.js("document.querySelector('table.tbl tbody').rows.length") == 32)
+    b.type('Investir')
+    b.js("document.querySelector('.mission-link').focus()")
+    b.key('Enter')
+    b.wait("document.querySelector('.mission-detail table tbody')?.rows.length === 5")
+    check('Investir 2030 : cinq programmes restaurés', b.js("document.querySelector('.mission-detail table tbody').rows.length") == 5)
+    check('fiche mission : total imprimé 2027', '4 Md€' in b.js("document.querySelector('.mission-facts').innerText"))
+    check('fiche mission : part du budget complet malgré filtre', '0,7 %' in b.js("document.querySelector('.mission-facts').innerText"))
+    check('fiche mission : focus sur titre', b.js("document.activeElement.id") == 'mission-title')
+    check('fiche mission : sources 309 et 310', b.js("document.querySelector('.mission-detail').innerText.includes('309') && document.querySelector('.mission-detail').innerText.includes('310')"))
+    b.js("document.querySelector('.back-btn').focus()")
+    b.key(' ', 'Space', windowsVirtualKeyCode=32)
+    b.wait("!!document.querySelector('.horizontal-ranking')")
+    check('retour clavier : focus restauré', b.js("document.activeElement.className") == 'mission-link')
+    check('retour : recherche conservée', b.js("document.querySelector('.search-input input').value") == 'Investir')
+    b.click('.reset-btn')
+    b.js("window.__exportBlob = null; window.__createURL = URL.createObjectURL; URL.createObjectURL = blob => { window.__exportBlob = blob; return window.__createURL(blob); }")
+    b.click('.missions-export')
+    exported = b.js("window.__exportBlob.text()")
+    import io
+    records = list(csv.DictReader(io.StringIO(exported.lstrip('\ufeff'))))
+    check('export CSV : 64 lignes sourcées', len(records) == 64 and all(r['source_document'] == 'l17b3210_projet-loi.pdf' for r in records))
+    check('export CSV : total identique au KPI', sum(int(r['montant']) for r in records if r['annee'] == '2027') == exp['CP']['t27'])
+    b.click('.toolbar > button:last-child')
+    b.wait("document.querySelectorAll('.tm-cell').length === 32")
+    check('vue experte : 32 cellules treemap', b.js("document.querySelectorAll('.tm-cell').length") == 32)
+    check('vue experte : 28 barres comparatives', b.js("document.querySelectorAll('.recharts-bar-rectangle').length") == 28)
+    b.wait("document.querySelector('.raw-export')?.innerText.includes('668')")
+    check('vue experte : 668 faits bruts', b.js("document.querySelector('.raw-export').innerText.includes('668')"))
+    check('vue experte : réconciliation explicite', b.js("document.querySelector('.quality-summary').innerText.includes('Aucun écart')"))
+    b.click('.tm-cell')
+    b.wait("!!document.querySelector('.mission-detail')")
+    check('treemap : navigation mission', 'Remboursements' in b.js("document.querySelector('#mission-title').innerText"))
+    b.js('history.back()')
+    b.wait("!!document.querySelector('.horizontal-ranking')")
+    check('retour navigateur : missions', b.js("document.querySelector('table.tbl tbody').rows.length") == 32)
 
 
 def main():
@@ -179,6 +224,7 @@ def main():
     ap.add_argument('--port', type=int, default=8901)
     args = ap.parse_args()
     with socket.socket() as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('127.0.0.1', args.port))  # échoue plutôt que tester un serveur préexistant
     server = subprocess.Popen(['python3', '-m', 'http.server', str(args.port), '--directory', str(ROOT / 'sqlrooms-dashboard/dist')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     browser = None
@@ -189,10 +235,12 @@ def main():
     except Exception as e:
         check('exécution des tests', False, str(e))
     finally:
-        if browser:
-            browser.close()
-        server.terminate()
-        server.wait()
+        try:
+            if browser:
+                browser.close()
+        finally:
+            server.terminate()
+            server.wait()
     print(f'\nRésultat : {COUNT - len(FAILURES)}/{COUNT} PASS')
     raise SystemExit(1 if FAILURES else 0)
 
