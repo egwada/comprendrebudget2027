@@ -85,3 +85,15 @@ L'utilisateur a explicitement demandé :
 - **Complexité relative** : pour seulement ~500 lignes, un modèle en 3 couches est sur-ingénieré. C'est un choix conscient pour démontrer le pattern SQLRooms.
 - **Vue matérialisée = snapshot** : si les données brutes changent, il faut recréer les `vm_*`. SQLRooms gère cela via un bouton de rechargement.
 - **DuckDB WASM limitations** : pas de persistance de session (IndexedDB possible mais non activée par défaut). Les données sont rechargées à chaque ouverture du dashboard.
+
+## Piège de types : Arrow `decimal128` vs Recharts (2027-…)
+
+**Symptôme** : le treemap n'affichait qu'une seule cellule (aires toutes à 0).
+
+**Cause** : `SUM(montant)` en DuckDB retourne `HUGEINT` (int128), exporté par Arrow en `decimal128(38,0)`, rendu par `apache-arrow` JS en objet `DecimalBigNum` — pas un `number`. Or le `computeNode` de Recharts fait `typeof v === 'number' ? v : 0` → toutes les valeurs de treemap tombent à 0.
+
+**Décision** :
+1. **Contrat SQL explicite** — toute agrégation exposée à l'UI est castée : `(SUM(...))::DOUBLE AS y2027`. DOUBLE est sans perte ici (montants < 2^53).
+2. **Défense dans `query()`** — conversion `bigint`/`DecimalBigNum` → `Number` avant de rendre les lignes à React.
+
+Règle : **la couche SQL garantit des types primitifs JSON-friendly** ; la couche JS ne suppose rien des types Arrow.

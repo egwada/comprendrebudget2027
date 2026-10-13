@@ -101,13 +101,27 @@ export function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
   return initPromise;
 }
 
+/**
+ * DuckDB renvoie HUGEINT/DECIMAL128 → Arrow rend des BigInt/DecimalBigNum.
+ * Recharts et l’UI attendent des Number : conversion défensive ici,
+ * en plus des casts ::DOUBLE côté SQL (contrat explicite, cf. ADR-002).
+ */
+function toJs(v: any): any {
+  if (typeof v === 'bigint') return Number(v);
+  if (v && typeof v === 'object' && typeof v[Symbol.toPrimitive] === 'function') {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return v;
+}
+
 export async function query<T = any>(sql: string): Promise<T[]> {
   const c = conn ?? (await initDuckDB());
   const result = await c.query(sql);
   return result.toArray().map((row: any) => {
     const obj: any = {};
     for (const field of result.schema.fields) {
-      obj[field.name] = row[field.name];
+      obj[field.name] = toJs(row[field.name]);
     }
     return obj;
   });

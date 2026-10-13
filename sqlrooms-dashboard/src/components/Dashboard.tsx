@@ -30,8 +30,8 @@ export default function Dashboard() {
     setLoading(true);
     const sql = `
       SELECT mission,
-        SUM(CASE WHEN type_credit = '${ct}' AND annee = 2026 THEN montant ELSE 0 END) as y2026,
-        SUM(CASE WHEN type_credit = '${ct}' AND annee = 2027 THEN montant ELSE 0 END) as y2027
+        (SUM(CASE WHEN type_credit = '${ct}' AND annee = 2026 THEN montant ELSE 0 END))::DOUBLE as y2026,
+        (SUM(CASE WHEN type_credit = '${ct}' AND annee = 2027 THEN montant ELSE 0 END))::DOUBLE as y2027
       FROM fact_credits
       WHERE programme != '(total mission)'
       GROUP BY mission
@@ -45,8 +45,8 @@ export default function Dashboard() {
     const esc = mission.replace(/'/g, "''");
     const sql = `
       SELECT programme as mission,
-        SUM(CASE WHEN type_credit = '${ct}' AND annee = 2026 THEN montant ELSE 0 END) as y2026,
-        SUM(CASE WHEN type_credit = '${ct}' AND annee = 2027 THEN montant ELSE 0 END) as y2027
+        (SUM(CASE WHEN type_credit = '${ct}' AND annee = 2026 THEN montant ELSE 0 END))::DOUBLE as y2026,
+        (SUM(CASE WHEN type_credit = '${ct}' AND annee = 2027 THEN montant ELSE 0 END))::DOUBLE as y2027
       FROM fact_credits
       WHERE mission = '${esc}' AND programme != '(total mission)'
       GROUP BY programme
