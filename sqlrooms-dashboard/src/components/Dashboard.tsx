@@ -5,7 +5,6 @@ import BarChartCompare from './BarChartCompare';
 import RankingTable from './RankingTable';
 import {
   fmtEUR,
-  fmtMd,
   fmtPct,
   evolutionPct,
   colorFor,
@@ -75,6 +74,13 @@ export default function Dashboard() {
   const deltaPct = evolutionPct(total26, total27);
   const top1 = sorted[0];
 
+  // Charge de la dette : mission « Engagements financiers de l’État » (l’essentiel, non pilotable)
+  const debt = view.find((r) => r.mission === 'Engagements financiers de l’État');
+  const debtDelta = debt ? debt.y2027 - debt.y2026 : 0;
+  const debtlessDelta = delta - debtDelta;
+  const debtless26 = total26 - (debt?.y2026 ?? 0);
+  const debtlessPct = evolutionPct(debtless26, debtless26 + debtlessDelta);
+
   const byGain = useMemo(
     () =>
       [...view]
@@ -141,18 +147,26 @@ export default function Dashboard() {
           <div className="sub">Année de référence, mêmes missions</div>
         </div>
         <div className="kpi">
-          <div className="label">Évolution demandée</div>
+          <div className="label">Évolution des crédits demandés</div>
           <div className="value">
-            {delta >= 0 ? '+' : '−'}
-            {fmtMd(Math.abs(delta))} Md€
+            {delta >= 0 ? '+' : '−'}{fmtEUR(Math.abs(delta))}
           </div>
           <div className="sub">
             {deltaPct !== null ? (
               <span className={`badge ${delta > 0 ? 'up' : delta < 0 ? 'down' : 'zero'}`}>
-                {fmtPct(deltaPct)} vs 2026
+                {fmtPct(deltaPct)} vs LFI 2026
               </span>
             ) : (
               '—'
+            )}
+            {debt && (
+              <div style={{ marginTop: 4 }}>
+                dont charge de la dette{' '}
+                <b>{debtDelta >= 0 ? '+' : '−'}{fmtEUR(Math.abs(debtDelta))}</b>
+                {' '}— hors dette :{' '}
+                {debtlessDelta >= 0 ? '+' : '−'}{fmtEUR(Math.abs(debtlessDelta))}
+                {debtlessPct !== null ? ` (${fmtPct(debtlessPct)})` : ''}
+              </div>
             )}
           </div>
         </div>
@@ -173,6 +187,25 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+
+      {/* ---- Note de lecture : réconcilier « 54 Md€ d’efforts » et nos +21 Md€ ---- */}
+      <div className="note">
+        <b>Pourquoi « +21 Md€ » quand tout le monde parle de « 54 Md€ d’efforts » ?</b>{' '}
+        Ces deux montants ne mesurent pas la même chose. Ici, on compare les crédits du{' '}
+        <b>budget général de l’État</b> entre la LFI 2026 et le PLF 2027, sur les{' '}
+        {view.length} missions de ce périmètre. La hausse est portée par la{' '}
+        <b>charge de la dette</b> (mission Engagements financiers de l’État :{' '}
+        {debtDelta >= 0 ? '+' : '−'}{fmtEUR(Math.abs(debtDelta))}) et par la <b>Défense</b> ; hors dette,
+        les crédits progressent de{' '}
+        {debtlessDelta >= 0 ? '+' : '−'}{fmtEUR(Math.abs(debtlessDelta))}
+        {debtlessPct !== null ? ` (${fmtPct(debtlessPct)})` : ''} — moins vite que l’inflation.
+        Les <b>54 Md€ d’efforts</b> (rapport général du PLF, p. 12) portent un périmètre plus
+        large — toutes les administrations publiques, dont la sécurité sociale via le{' '}
+        PLFSS, hors de ce tableau de bord — : 43 Md€ de mesures de redressement dans les
+        textes financiers 2027, plus la montée en charge de mesures prises en 2026 et
+        antérieurement, mesurés par rapport à une trajectoire « à politique inchangée », non
+        par rapport à la LFI 2026.
+      </div>
 
       {/* ---- Top 5 ---- */}
       <div className="section-title">Les 5 premiers postes de dépenses</div>

@@ -113,6 +113,19 @@ body {
 .kpi .value { font-size: 27px; font-weight: 800; letter-spacing: -0.5px; margin-top: 4px; }
 .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
 
+/* ---- Note de lecture ---- */
+.note {
+  background: #eef1fb;
+  border-left: 4px solid var(--blue);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #26263a;
+  margin: 14px 0 6px;
+}
+.note b { color: var(--blue); }
+
 /* ---- Top postes ---- */
 .section-title {
   font-size: 13px;
