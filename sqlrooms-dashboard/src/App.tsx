@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { initDuckDB } from './duckdb';
 import Dashboard from './components/Dashboard';
+import Methodology from './components/Methodology';
+
+const methodologyPage = new URLSearchParams(location.search).get('page') === 'methodologie';
 
 function App() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (methodologyPage) return;
     let cancelled = false;
     initDuckDB()
       .then(() => {
@@ -19,6 +23,8 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  if (methodologyPage) return <Methodology />;
 
   if (error) {
     return (

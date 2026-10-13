@@ -397,6 +397,10 @@ p { line-height: 1.6; }
 .tbl .sort-btn { border: 0; padding: 6px; background: transparent; color: var(--blue); font-weight: 700; }
 .mission-link { border: 0; background: transparent; text-align: left; color: var(--blue); text-decoration: underline; padding: 4px; }
 .tbl tfoot td, .tbl tfoot th { background: #f6f6fa; padding: 12px; font-weight: 700; }
+main > .panel { margin-top: 18px; }
+.glossary { display: grid; gap: 18px; }
+.glossary dt { font-weight: 700; }
+.glossary dd { margin: 6px 0; line-height: 1.6; }
 .mission-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .mission-facts dt { color: var(--muted); font-size: 14px; }
 .mission-facts dd { margin: 6px 0; font-weight: 700; font-size: 18px; }

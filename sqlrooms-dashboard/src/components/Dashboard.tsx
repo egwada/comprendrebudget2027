@@ -5,6 +5,7 @@ import BarChartCompare from './BarChartCompare';
 import RankingTable from './RankingTable';
 import MissionDetail, { type QualityRow } from './MissionDetail';
 import ExpertData from './ExpertData';
+import BudgetContext from './BudgetContext';
 import { exportCredits } from '../lib/csv';
 import { fmtEUR, fmtPct, evolutionPct, evolutionLabel } from '../lib/format';
 import '../styles.css';
@@ -94,6 +95,7 @@ export default function Dashboard() {
   const top = sorted.slice(0, 5);
   const topShare = total27 ? top.reduce((s, r) => s + r.y2027, 0) / total27 * 100 : 0;
   const mission = rows.find((r) => r.mission === selected);
+  const largestGains = [...sorted].filter((r) => r.y2027 > r.y2026).sort((a, b) => (b.y2027 - b.y2026) - (a.y2027 - a.y2026)).slice(0, 2);
   const budgetTotal = rows.reduce((s, r) => s + r.y2027, 0);
   const navigate = (name: string | null) => {
     navigationPending.current = true;
@@ -123,7 +125,8 @@ export default function Dashboard() {
           <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ex. : enseignement" />
         </label>
         <button className="reset-btn" onClick={reset}>Réinitialiser</button>
-        <button aria-pressed={expert} onClick={() => setExpert(!expert)}>Vue {expert ? 'citoyenne' : 'experte'}</button>
+        <button className="expert-toggle" aria-pressed={expert} onClick={() => setExpert(!expert)}>Vue {expert ? 'citoyenne' : 'experte'}</button>
+        <a href="/?page=methodologie">Méthodologie et glossaire</a>
       </nav>
       <main id="contenu" tabIndex={-1}>
         <p className="note">Les montants présentés correspondent aux crédits prévus dans le PLF 2027. Ils ne représentent pas encore les dépenses effectivement réalisées.</p>
@@ -140,7 +143,7 @@ export default function Dashboard() {
           {!selected ? <>
             <section aria-labelledby="top-title">
               <h2 id="top-title" className="section-title">Les cinq principaux postes</h2>
-              <p className="takeaway"><b>À retenir :</b> les cinq premiers postes représentent {topShare.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % des crédits {search ? 'filtrés' : 'du budget général'} en {creditType} 2027. Les remboursements d’impôts ne sont pas des services publics directement financés.</p>
+              <p className="takeaway"><b>À retenir :</b> les cinq premiers postes représentent {topShare.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % des crédits {search ? 'filtrés' : 'du budget général'} en {creditType} 2027. {largestGains.length > 0 && <>Les hausses en euros les plus importantes concernent {largestGains.map((r) => r.mission).join(' et ')}. </>}Les remboursements d’impôts ne sont pas des services publics directement financés.</p>
               <div className="top5">{top.map((r, i) => <button id={`top-${r.mission}`} className="mcard" key={r.mission} onClick={() => selectMission(r.mission)}><span className="rank">#{i + 1}</span><span className="name">{r.mission}</span><span className="val">{fmtEUR(r.y2027)}</span><span className="sub">{evolutionLabel(r.y2026, r.y2027)}</span></button>)}</div>
               <a className="explore-btn" href="#missions">Explorer les missions</a>
             </section>
@@ -159,6 +162,7 @@ export default function Dashboard() {
             </section>
             {expert && <section aria-labelledby="expert-title"><h2 id="expert-title" className="section-title">Explorer — vue experte</h2><p>Carte : surfaces proportionnelles aux {creditType} 2027. Comparatif : les quatorze premiers postes en 2026 et 2027. Alternative complète : le tableau de classement ci-dessus.</p><div className="grid-2"><TreemapChart data={sorted} total={total27} onSelect={selectMission} /><BarChartCompare data={sorted.slice(0, 14)} creditType={creditType} onSelect={selectMission} /></div><ExpertData quality={quality} /></section>}
           </> : mission ? <MissionDetail mission={mission} programs={programs} budgetTotal={budgetTotal} creditType={creditType} loading={programLoading} quality={quality.filter((q) => q.mission === selected)} onBack={() => navigate(null)} /> : <section className="panel"><h2 id="mission-title" tabIndex={-1}>Mission introuvable</h2><button className="back-btn" onClick={() => navigate(null)}>← Toutes les missions</button></section>}
+          {!selected && <BudgetContext />}
           {!selected && quality.some((q) => q.ecart !== 0) && <p className="mes-warning quality-alert">Des écarts entre totaux mission et programmes sont détectés pour {creditType}. Les KPI utilisent les totaux imprimés ; consulter la vue experte pour les écarts détaillés.</p>}
         </>}
       </main>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { query } from '../duckdb';
+import { downloadCsv } from '../lib/csv';
 
 export interface MesureRow {
   branche: string;
@@ -34,7 +35,9 @@ function badge(r: MesureRow) {
 
 export default function MesuresPLFSS() {
   const [rows, setRows] = useState<MesureRow[] | null>(null);
+  const [error, setError] = useState('');
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       const r = await query<MesureRow>(
         `SELECT branche, article, intitule, montant_md, effet, annee, source_page, note
@@ -44,11 +47,13 @@ export default function MesuresPLFSS() {
             WHEN 'transfert' THEN 4 WHEN 'objectif' THEN 5 ELSE 6 END,
            ABS(montant_md) DESC`
       );
-      setRows(r);
-    })();
+      if (!cancelled) setRows(r);
+    })().catch((e) => { if (!cancelled) setError(String(e)); });
+    return () => { cancelled = true; };
   }, []);
 
-  if (!rows) return null;
+  if (error) return <p role="alert">Mesures indisponibles : {error}</p>;
+  if (!rows) return <p role="status">Chargement des mesures PLFSS…</p>;
   if (rows.length === 0) return null;
 
   return (
@@ -57,13 +62,15 @@ export default function MesuresPLFSS() {
         <h3>Mesures de redressement — sécurité sociale (PLFSS 2027)</h3>
       </div>
       <p className="hint">
-        La partie « sécurité sociale » des 43 Md€ de mesures 2027 (PLF + PLFSS) :
-        ce que fait le PLFSS, branche par branche. Ventilation exacte PLF / PLFSS{' '}
+        Mesures documentées sur le périmètre sécurité sociale, branche par branche.
+        Elles ne constituent pas une ventilation chiffrée des 43 Md€. Ventilation exacte PLF / PLFSS{' '}
         <b>non publiée</b> à ce stade — chiffres curation page par page depuis le texte soumis
         au Conseil des ministres (NOR CPPX2620963L/Bleue-1).
       </p>
-      <div className="tbl-wrap">
-        <table className="tbl">
+      <button className="plfss-export export-btn" onClick={() => downloadCsv('mesures-plfss.csv', rows.map((r) => ({ ...r, scope: 'securite_sociale', unite: 'Md€', source_document: 'plfss_2027_texte.pdf', qualite_extraction: 'curation_sourcee_non_additive' })))}>Exporter les mesures documentées en CSV (sans total)</button>
+      <div className="tbl-wrap" role="region" tabIndex={0} aria-label="Mesures PLFSS, défilement horizontal possible">
+        <table className="tbl plfss-table">
+          <caption>Mesures PLFSS — montants en Md€, années indiquées par ligne, périmètre sécurité sociale. Ne pas additionner.</caption>
           <thead>
             <tr>
               <th>Branche</th>
@@ -93,7 +100,7 @@ export default function MesuresPLFSS() {
                   <td className="num">
                     <b>{fmt(r.montant_md)}</b>
                   </td>
-                  <td className="num">p. {r.source_page}</td>
+                  <td className="num"><a href={`/sources/plfss_2027_texte.pdf#page=${r.source_page}`} target="_blank" rel="noreferrer" aria-label={`PLFSS, page ${r.source_page}, nouvel onglet`}>p. {r.source_page}</a></td>
                 </tr>
               );
             })}
