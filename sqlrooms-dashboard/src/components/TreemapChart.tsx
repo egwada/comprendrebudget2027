@@ -1,52 +1,93 @@
 import { Treemap, Tooltip, ResponsiveContainer } from 'recharts';
-import type { MissionData } from './Dashboard';
+import type { MissionRow } from './Dashboard';
+import { colorFor, labelColorFor, fmtEUR, fmtPct, truncate } from '../lib/format';
 
 interface Props {
-  data: MissionData[];
-  onMissionClick: (mission: string) => void;
+  data: MissionRow[];
+  total: number;
+  onSelect: (mission: string) => void;
 }
 
-export default function TreemapChart({ data, onMissionClick }: Props) {
-  const chartData = data.map((m) => ({
-    name: m.mission,
-    size: m.total || 0,
-    formatted: ((m.total || 0) / 1e9).toFixed(2) + ' Md€',
+interface CellItem extends MissionRow {
+  share: number;
+}
+
+const Cell = (props: any) => {
+  const { x, y, width, height, name, size } = props;
+  if (width <= 0 || height <= 0 || !name) return null;
+  const bg = colorFor(name);
+  const fg = labelColorFor(bg);
+  const showName = width > 64 && height > 30;
+  const showVal = width > 110 && height > 52;
+  return (
+    <g className="tm-cell" onClick={() => props?.onSelect?.(name)}>
+      <rect x={x} y={y} width={width} height={height} rx={5} fill={bg} stroke="#fff" strokeWidth={2} />
+      {showName && (
+        <text x={x + 9} y={y + 19} fill={fg} fontSize={11} fontWeight={600}>
+          {truncate(name, 24)}
+        </text>
+      )}
+      {showVal && (
+        <text x={x + 9} y={y + 39} fill={fg} fontSize={14} fontWeight={800}>
+          {fmtEUR(size)}
+        </text>
+      )}
+    </g>
+  );
+};
+
+export default function TreemapChart({ data, total, onSelect }: Props) {
+  const chartData: CellItem[] = data.map((m) => ({
+    ...m,
+    share: total ? (m.y2027 / total) * 100 : 0,
   }));
+  const byName = new Map(chartData.map((c) => [c.mission, c]));
 
   return (
-    <div style={{ background: '#fafafa', borderRadius: 8, padding: 16, border: '1px solid #e0e0e0' }}>
-      <h3 style={{ marginTop: 0 }}>🗺️ Répartition par mission</h3>
-      <p style={{ fontSize: 12, color: '#666', marginTop: -8 }}>
-        Surface = montant CP 2027. Cliquez pour explorer les programmes.
+    <div className="panel">
+      <h3>Où va l’argent : la carte des crédits</h3>
+      <p className="hint">
+        Chaque rectangle est une mission, à l’échelle de ses crédits 2027. Cliquez pour zoomer sur ses programmes.
       </p>
-      <ResponsiveContainer width="100%" height={350}>
-        <Treemap
-          data={chartData}
-          dataKey="size"
-          nameKey="name"
-          aspectRatio={4 / 3}
-          stroke="#fff"
-          fill="#1976d2"
-          onClick={(node: any) => {
-            if (node?.name) onMissionClick(node.name);
-          }}
-        >
-          <Tooltip
-            content={({ active, payload }: any) => {
-              if (active && payload && payload.length) {
-                const d = payload[0].payload;
+      {chartData.length === 0 ? (
+        <div className="empty">Aucune mission ne correspond à la recherche.</div>
+      ) : (
+        <ResponsiveContainer width="100%" height={420}>
+          <Treemap
+            data={chartData as any}
+            dataKey="y2027"
+            nameKey="mission"
+            stroke="#fff"
+            content={<Cell onSelect={onSelect} />}
+            onClick={(n: any) => {
+              const name = n?.payload?.mission ?? n?.mission ?? n?.name;
+              if (name) onSelect(name);
+            }}
+            isAnimationActive={false}
+          >
+            <Tooltip
+              content={({ active, payload }: any) => {
+                if (!active || !payload?.length) return null;
+                const c =
+                  (payload[0].payload as CellItem) ??
+                  byName.get(payload[0].payload?.mission);
+                if (!c) return null;
                 return (
-                  <div style={{ background: '#fff', padding: 8, border: '1px solid #ccc', borderRadius: 4, fontSize: 13 }}>
-                    <strong>{d.name}</strong>
-                    <div>{d.formatted}</div>
+                  <div className="tt">
+                    <b>{c.mission}</b>
+                    <div style={{ marginTop: 4 }}>
+                      Crédits 2027 : <b>{fmtEUR(c.y2027)}</b>
+                    </div>
+                    <div className="tt-muted">
+                      {fmtPct(c.share, 1)} du total · LFI 2026 : {fmtEUR(c.y2026)}
+                    </div>
                   </div>
                 );
-              }
-              return null;
-            }}
-          />
-        </Treemap>
-      </ResponsiveContainer>
+              }}
+            />
+          </Treemap>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }
