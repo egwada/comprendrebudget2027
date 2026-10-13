@@ -56,6 +56,18 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
   );
   console.log('[DUCKDB] Context table created');
 
+  // Mesures de redressement PLFSS — texte soumis au Conseil des ministres (ADR-004)
+  console.log('[DUCKDB] Fetching PLFSS mesures CSV...');
+  const mesText = await fetch('/data/fact_mesures_plfss.csv').then((r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/fact_mesures_plfss.csv`);
+    return r.text();
+  });
+  await db.registerFileText('fact_mesures_plfss.csv', mesText);
+  await c.query(
+    `CREATE OR REPLACE TABLE fact_mesures_plfss AS FROM read_csv_auto('fact_mesures_plfss.csv')`
+  );
+  console.log('[DUCKDB] PLFSS mesures table created');
+
   await c.query(`
     CREATE OR REPLACE VIEW v_missions_cp_2027 AS
     SELECT mission, SUM(montant) as total

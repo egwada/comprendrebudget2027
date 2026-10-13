@@ -54,3 +54,41 @@ Corriger `extract_budget.py` (continuations multi-lignes des libellés en gras),
 ## Conclusion
 
 **Le tableau de bord est VALIDÉ en l'état** : build propre (tsc + vite), chargement DuckDB-WASM robuste (init idempotente, WASM servi même-origine), toutes les interactions fonctionnent, et les valeurs affichées correspondent exactement aux données extraites. Les réserves portent exclusivement sur la qualité d'extraction amont, quantifiées ci-dessus, à traiter dans l'évolution suivante.
+---
+
+# Addendum du 2026-10-14 — PLFSS : faire apparaître la part sécurité sociale des 43 Md€
+
+**Commits** : `2178e0d` (ADR-004) → validation étendue **38/38 PASS** (`scripts/validate_headless.py`)
+
+## Nouvelle source : texte du PLFSS 2027
+
+- `plfss_2027_texte.pdf` (121 p., NOR CPPX2620963L/Bleue-1, texte soumis au Conseil des
+  ministres) ajouté au repo à côté du PLF tome 1.
+- `data/staging/fact_mesures_plfss.csv` : **17 mesures chiffrées curatées page par page**
+  (branche, article, montant en Md€, effet, année, page source, note) → table DuckDB
+  `fact_mesures_plfss` (ADR-004 : curation, comme ADR-003).
+
+## Nouveaux contrôles (7) : section « Et les 43 Md€ côté sécurité sociale — le PLFSS 2027 »
+
+| # | Contrôle | Attendu |
+|---|---|---|
+| 17 | Section présente | « 43 MD€ CÔTÉ SÉCURITÉ SOCIALE — PLFSS 2027 » |
+| 18 | ONDAM affiché | 278,7 Md€ |
+| 19 | Économies ONDAM | 5,1 Md€ |
+| 20 | Solde ROBSS | −12,7 Md€ |
+| 21 | Réserve anti-addition | « ne pas additionner » |
+| 22 | Réserve ventilation | « non publiée » |
+| 23 | Lignes de mesures | 17 |
+
+Plus : la section est **masquée en vue programmes** (drill-down) — contrôlé.
+La carte contexte `mesures_2027` (43 Md€) pointe désormais vers cette section au lieu
+d'écarter le PLFSS du périmètre.
+
+## Réserves de données inchangées
+
+La ventilation exacte des 43 Md€ entre PLF et PLFSS **n'est publiée dans aucun document
+disponible** (vérifié : aucun chiffre « dont X côté PLF/Y côté PLFSS » dans le tome 1 ni le
+texte PLFSS ; dossier AN « PLFSS_2027 » encore vide à date). Les mesures PLFSS affichées
+se recoupent (montée en charge 2026 vs économies nouvelles 2027) : le tableau n'affiche
+**aucun total additionné**, les repères agrégés sont ceux du texte (solde −12,7 Md€,
+rendement ~9 Md€ dépenses, > 6 Md€ recettes, ~3 Md€ reprise en base).

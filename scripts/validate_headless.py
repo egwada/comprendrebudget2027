@@ -170,7 +170,7 @@ def run_ui_checks(port, exp):
     check("barres : top 14 × 2 séries",
           eval_js("document.querySelectorAll('.recharts-bar-rectangle').length")
           == 28)
-    n_rows = eval_js("document.querySelectorAll('table.tbl tbody tr').length")
+    n_rows = eval_js("document.querySelector('table.tbl')?.querySelectorAll('tbody tr').length")
     check("tableau : missions + ligne total",
           n_rows == cp["n"] + 1, f"{n_rows} / {cp['n'] + 1}")
     first_row = eval_js(
@@ -189,7 +189,26 @@ def run_ui_checks(port, exp):
     check("cartes contexte : périmètre et sources affichés",
           "source p. 12" in ctx_txt and "Administrations publiques" in ctx_txt)
 
-    # -- 3. tri du tableau (PLF 2027 = 3ᵈ colonne : Mission | LFI 2026 | PLF 2027 | Événement | Part)
+    # -- Mesures PLFSS (ADR-004)
+    mes_head = (eval_js("[...document.querySelectorAll('.section-title')].map(e => e.innerText).join(' | ')")
+                or "").upper()
+    check("section « 43 Md€ côté sécurité sociale — PLFSS 2027 » présente",
+          "43 MD€ CÔTÉ SÉCURITÉ SOCIALE" in mes_head and "PLFSS 2027" in mes_head)
+    mes_txt = eval_js("document.body.innerText") or ""
+    check("mesures PLFSS : ONDAM 278,7 Md€ affiché", "278,7 Md€" in mes_txt)
+    check("mesures PLFSS : économies ONDAM 5,1 Md€ affichées", "5,1 Md€" in mes_txt)
+    check("mesures PLFSS : solde ROBSS −12,7 Md€ affiché", "−12,7 Md€" in mes_txt)
+    check("mesures PLFSS : réserve « ne pas additionner » affichée",
+          "ne pas additionner" in mes_txt.lower())
+    check("mesures PLFSS : réserve ventilation non publiée affichée",
+          "non publiée" in mes_txt.lower())
+    n_mes = eval_js(
+        "[...document.querySelectorAll('table.tbl')].map(t => t.querySelectorAll('tbody tr').length).join(',')"
+    ) or ""
+    check("mesures PLFSS : 17 lignes de mesures", n_mes.split(",")[-1] == "17",
+          f"{n_mes}")
+
+    # -- 3. tri du tableau (PLF 2027 = 3ᵈ colonne : Mission | LFI 2026 | PLF 2027 | Évolution | Part)
     click_first("table.tbl th:nth-child(3)")  # PLF 2027 -> bascule asc
     time.sleep(0.4)
     first_asc = eval_js(
@@ -218,7 +237,7 @@ def run_ui_checks(port, exp):
     # -- 5. recherche
     type_text(".search-input input", "Défense")
     time.sleep(0.5)
-    n_rows = eval_js("document.querySelectorAll('table.tbl tbody tr').length",
+    n_rows = eval_js("document.querySelector('table.tbl')?.querySelectorAll('tbody tr').length",
                      tries=20)
     check("recherche « Défense » : 1 mission + total", n_rows == 2,
           f"{n_rows} lignes")
@@ -245,6 +264,8 @@ def run_ui_checks(port, exp):
           "Remboursements" in (eval_js("document.querySelector('.chip')?.innerText") or ""))
     check("vue programmes : nom de la mission dans le titre",
           f"Programmes — {exp['CP']['top_name']}"[:40] in body)
+    check("clic treemap : section PLFSS masquée en vue programmes",
+          "278,7 Md€" not in (eval_js("document.body.innerText") or ""))
     n_prog = eval_js("document.querySelectorAll('table.tbl tbody tr').length")
     check("nombre de programmes de la mission top",
           n_prog == len(exp["top_programs"]),
@@ -252,7 +273,7 @@ def run_ui_checks(port, exp):
     # -- 7. retour
     click_first(".back-btn")
     time.sleep(0.6)
-    n_rows = eval_js("document.querySelectorAll('table.tbl tbody tr').length",
+    n_rows = eval_js("document.querySelector('table.tbl')?.querySelectorAll('tbody tr').length",
                      tries=20)
     check("retour : missions + total", n_rows == cp["n"] + 1, f"{n_rows} lignes")
     # -- 8. drill-down via clic ligne tableau (une autre mission)

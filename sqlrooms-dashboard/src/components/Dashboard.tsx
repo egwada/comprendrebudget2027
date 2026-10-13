@@ -3,6 +3,7 @@ import { query } from '../duckdb';
 import TreemapChart from './TreemapChart';
 import BarChartCompare from './BarChartCompare';
 import RankingTable from './RankingTable';
+import MesuresPLFSS from './MesuresPLFSS';
 import {
   fmtEUR,
   fmtPct,
@@ -354,6 +355,16 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* ---- Mesures de redressement côté sécurité sociale (PLFSS — ADR-004) ---- */}
+      {!selected && (
+        <>
+          <div className="section-title">
+            Et les 43 Md€ côté sécurité sociale — le PLFSS 2027
+          </div>
+          <MesuresPLFSS />
+        </>
+      )}
 
       <footer className="src">
         Source : Projet de loi de finances pour 2027, tome 1 — récapitulatif général des crédits
