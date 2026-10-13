@@ -3,44 +3,49 @@ import * as duckdb from '@duckdb/duckdb-wasm';
 let db: duckdb.AsyncDuckDB | null = null;
 let conn: duckdb.AsyncDuckDBConnection | null = null;
 
-export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
-  if (conn) return conn;
+/**
+ * Cached init promise: guarantees a SINGLE initialization even when
+ * React StrictMode double-invokes effects (dev) or several components
+ * call initDuckDB() concurrently.
+ */
+let initPromise: Promise<duckdb.AsyncDuckDBConnection> | null = null;
 
-  try {
-    console.log('[DUCKDB] Loading local bundles...');
-    // Use local files instead of CDN to avoid CORS issues with Workers
-    const bundle: duckdb.DuckDBBundle = {
-      mainModule: '/duckdb/duckdb-eh.wasm',
-      mainWorker: '/duckdb/duckdb-browser-eh.worker.js',
-      pthreadWorker: null,
-    };
-    console.log('[DUCKDB] Bundle configured:', bundle.mainWorker);
+async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
+  console.log('[DUCKDB] Loading local bundles...');
+  // Local files (same origin) — avoids cross-origin Worker restrictions
+  const bundle: duckdb.DuckDBBundle = {
+    mainModule: '/duckdb/duckdb-eh.wasm',
+    mainWorker: '/duckdb/duckdb-browser-eh.worker.js',
+    pthreadWorker: null,
+  };
 
-    const worker = new Worker(bundle.mainWorker!);
-    const logger = new duckdb.ConsoleLogger();
-    db = new duckdb.AsyncDuckDB(logger, worker);
-    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-    console.log('[DUCKDB] WASM instantiated');
+  const worker = new Worker(bundle.mainWorker!);
+  const logger = new duckdb.ConsoleLogger();
+  db = new duckdb.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  console.log('[DUCKDB] WASM instantiated');
 
-    conn = await db.connect();
-    console.log('[DUCKDB] Connected');
+  const c = await db.connect();
+  conn = c;
 
-    // Load CSV
-    console.log('[DUCKDB] Fetching CSV...');
-    const csvText = await fetch('/data/fact_credits.csv').then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status} for /data/fact_credits.csv`);
-      return r.text();
-    });
-    console.log('[DUCKDB] CSV fetched, length:', csvText.length);
-    await db.registerFileText('fact_credits.csv', csvText);
-    console.log('[DUCKDB] CSV registered');
+  // Load CSV
+  console.log('[DUCKDB] Fetching CSV...');
+  const csvText = await fetch('/data/fact_credits.csv').then((r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/fact_credits.csv`);
+    return r.text();
+  });
+  console.log('[DUCKDB] CSV fetched, length:', csvText.length);
+  await db.registerFileText('fact_credits.csv', csvText);
+  console.log('[DUCKDB] CSV registered');
 
-    const createResult = await conn.query(`CREATE TABLE fact_credits AS FROM read_csv_auto('fact_credits.csv')`);
-    console.log('[DUCKDB] Table created, rows:', createResult.numRows);
+  // Idempotent DDL — safe to re-run (StrictMode, HMR, refresh)
+  await c.query(
+    `CREATE OR REPLACE TABLE fact_credits AS FROM read_csv_auto('fact_credits.csv')`
+  );
+  console.log('[DUCKDB] Table created');
 
-    // Create views for easy querying
-  await conn.query(`
-    CREATE VIEW v_missions_cp_2027 AS
+  await c.query(`
+    CREATE OR REPLACE VIEW v_missions_cp_2027 AS
     SELECT mission, SUM(montant) as total
     FROM fact_credits
     WHERE type_credit = 'CP' AND annee = 2027 AND programme != '(total mission)'
@@ -48,8 +53,8 @@ export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
     ORDER BY total DESC
   `);
 
-  await conn.query(`
-    CREATE VIEW v_missions_cp_2026 AS
+  await c.query(`
+    CREATE OR REPLACE VIEW v_missions_cp_2026 AS
     SELECT mission, SUM(montant) as total
     FROM fact_credits
     WHERE type_credit = 'CP' AND annee = 2026 AND programme != '(total mission)'
@@ -57,8 +62,8 @@ export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
     ORDER BY total DESC
   `);
 
-  await conn.query(`
-    CREATE VIEW v_compare_missions AS
+  await c.query(`
+    CREATE OR REPLACE VIEW v_compare_missions AS
     SELECT
       m2027.mission,
       m2026.total as cp_2026,
@@ -68,8 +73,8 @@ export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
     ORDER BY m2027.total DESC
   `);
 
-  await conn.query(`
-    CREATE VIEW v_programs AS
+  await c.query(`
+    CREATE OR REPLACE VIEW v_programs AS
     SELECT mission, programme,
       SUM(CASE WHEN type_credit = 'CP' AND annee = 2026 THEN montant ELSE 0 END) as cp_2026,
       SUM(CASE WHEN type_credit = 'CP' AND annee = 2027 THEN montant ELSE 0 END) as cp_2027,
@@ -80,17 +85,25 @@ export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
     GROUP BY mission, programme
   `);
 
-    console.log('[DUCKDB] Views created');
-    return conn;
-  } catch (e: any) {
-    console.error('[DUCKDB] Init failed:', e);
-    throw new Error(`DuckDB init failed: ${e.message || e}`);
+  console.log('[DUCKDB] Views created — init complete');
+  return c;
+}
+
+export function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
+  if (!initPromise) {
+    initPromise = doInit();
+    // On failure, allow a later call to retry the initialization.
+    initPromise.catch(() => {
+      initPromise = null;
+      conn = null;
+    });
   }
+  return initPromise;
 }
 
 export async function query<T = any>(sql: string): Promise<T[]> {
-  if (!conn) throw new Error('DuckDB not initialized');
-  const result = await conn.query(sql);
+  const c = conn ?? (await initDuckDB());
+  const result = await c.query(sql);
   return result.toArray().map((row: any) => {
     const obj: any = {};
     for (const field of result.schema.fields) {
