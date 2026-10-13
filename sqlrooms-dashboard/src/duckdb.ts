@@ -6,22 +6,35 @@ let conn: duckdb.AsyncDuckDBConnection | null = null;
 export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
   if (conn) return conn;
 
-  const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-  const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+  try {
+    console.log('[DUCKDB] Loading bundles...');
+    const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+    const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+    console.log('[DUCKDB] Bundle selected:', bundle.mainWorker);
 
-  const worker = new Worker(bundle.mainWorker!);
-  const logger = new duckdb.ConsoleLogger();
-  db = new duckdb.AsyncDuckDB(logger, worker);
-  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+    const worker = new Worker(bundle.mainWorker!);
+    const logger = new duckdb.ConsoleLogger();
+    db = new duckdb.AsyncDuckDB(logger, worker);
+    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+    console.log('[DUCKDB] WASM instantiated');
 
-  conn = await db.connect();
+    conn = await db.connect();
+    console.log('[DUCKDB] Connected');
 
-  // Load CSV
-  const csvText = await fetch('/data/fact_credits.csv').then((r) => r.text());
-  await db.registerFileText('fact_credits.csv', csvText);
-  await conn.query(`CREATE TABLE fact_credits AS FROM read_csv_auto('fact_credits.csv')`);
+    // Load CSV
+    console.log('[DUCKDB] Fetching CSV...');
+    const csvText = await fetch('/data/fact_credits.csv').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status} for /data/fact_credits.csv`);
+      return r.text();
+    });
+    console.log('[DUCKDB] CSV fetched, length:', csvText.length);
+    await db.registerFileText('fact_credits.csv', csvText);
+    console.log('[DUCKDB] CSV registered');
 
-  // Create views for easy querying
+    const createResult = await conn.query(`CREATE TABLE fact_credits AS FROM read_csv_auto('fact_credits.csv')`);
+    console.log('[DUCKDB] Table created, rows:', createResult.numRows);
+
+    // Create views for easy querying
   await conn.query(`
     CREATE VIEW v_missions_cp_2027 AS
     SELECT mission, SUM(montant) as total
@@ -63,7 +76,12 @@ export async function initDuckDB(): Promise<duckdb.AsyncDuckDBConnection> {
     GROUP BY mission, programme
   `);
 
-  return conn;
+    console.log('[DUCKDB] Views created');
+    return conn;
+  } catch (e: any) {
+    console.error('[DUCKDB] Init failed:', e);
+    throw new Error(`DuckDB init failed: ${e.message || e}`);
+  }
 }
 
 export async function query<T = any>(sql: string): Promise<T[]> {
