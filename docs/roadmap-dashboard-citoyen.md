@@ -1,8 +1,10 @@
 # Feuille de route — Tableau de bord budgétaire citoyen
 
-**Statut** : plan de travail à reprendre lors de la prochaine session  
-**Dernière mise à jour** : 2026-10-14  
-**Dernier état fonctionnel validé** : commit `95ca773` — 38/38 contrôles headless PASS
+**Statut** : quatre tranches implémentées et validées pour le prototype local ; tests utilisateurs, audit manuel et déploiement distant à réaliser.
+
+**Validation actuelle** : 81/81 contrôles headless, 5/5 tests de données et 5/5 tests unitaires — voir `docs/validation.md`.
+
+**État de référence avant travaux** : commit `95ca773` — 38/38 contrôles headless PASS.
 
 ## Objectif produit
 
@@ -39,9 +41,10 @@ Le tableau de bord doit rester utile aux journalistes, associations, chercheurs 
 
 ### Réserves de données à traiter en premier
 
-- trois noms de missions tronqués par l'extraction PDF ;
-- mission « Investir pour la France de 2030 » absente de la vue programmes ;
-- environ 4 Md€ d'écarts entre totaux mission du PDF et sommes des programmes extraits ;
+- **corrigé** : libellés multi-lignes complets et cohérents entre missions et programmes ;
+- **corrigé** : Investir 2030, cinq programmes sur les pages 309–310 ;
+- **corrigé** : les 32 totaux mission réconcilient avec les programmes dans les quatre colonnes ; les futurs écarts restent exposés ;
+- **réserve de publication** : le PLF fourni est fictif / simulé (ADR-001), mentionné dans l’interface ;
 - les chiffres affichés sont des crédits prévus, pas des dépenses exécutées ;
 - les 43/54 Md€ concernent un périmètre plus large que le budget général et ne doivent pas être additionnés aux crédits ;
 - la ventilation exacte PLF / PLFSS des 43 Md€ n'est pas publiée dans les documents actuellement disponibles.
@@ -437,4 +440,31 @@ Questions de validation :
 
 ## Prochaine tâche recommandée
 
-Commencer par **T1.1 à T1.3 — fiabilisation des agrégats et des libellés**, puis implémenter le Vertical Slice 1. Ne pas ajouter de nouveaux graphiques avant d'avoir sécurisé les chiffres affichés.
+Réaliser les tests citoyens selon `docs/tests-utilisateurs-dashboard.md`, puis l’audit manuel d’accessibilité et choisir un hébergement. Le prototype et le build statique sont prêts localement ; aucun budget officiel ni déploiement public n’est prétendu.
+
+## Suivi de l’implémentation
+
+Branches successives (empilées, la dernière contient les précédentes) :
+
+1. `feat/citoyen-01-donnees-accueil` : extraction, contrat, glossaire, publics, totaux mission, classement citoyen et pour 100 € ;
+2. `feat/citoyen-02-fiches-missions` : fiches, programmes, sources, navigation/focus et exports ;
+3. `feat/citoyen-03-perimetres-methodologie` : contexte 43/54, PLFSS non additif et page méthodologie ;
+4. `feat/citoyen-04-accessibilite-publication` : axe-core, contraste, mobile, zoom, performance, tests et build de publication ;
+5. `feat/dashboard-citoyen` : branche d’intégration finale.
+
+| Tâches | État |
+|---|---|
+| T0.1–T0.3 | Publics, glossaire, périmètres et avertissement documentés et rendus |
+| T1.1–T1.4 | Extraction corrigée ; 32 missions ; contrat et réconciliation testés |
+| T2.1–T2.4 | Vue citoyenne CP, cinq postes, classement principal, pour 100 €, barre blanche |
+| T3.1–T3.3 | Global, fiche mission et mode expert (graphiques, brut, CSV, SQL, qualité) |
+| T4.1–T4.3 | Périmètres séparés et réserves explicites ; ventilation officielle future non inventée |
+| T5.1–T5.4 | HTML structuré, tableaux, boutons, focus, libellés hausse/baisse, alternatives et exports |
+| T5.5 | Axe-core A/AA sur cinq vues, contrastes, clavier, mobile, zoom émulé, reduced-motion |
+| T6.1–T6.3 | Synthèses calculées, explication mission fondée sur les intitulés sourcés, glossaire et méthodologie |
+| T7.1–T7.2 | Données, intégrité, KPI, filtres, navigation, exports, qualité, contexte et accessibilité testés |
+| T7.3 | Protocole prêt, tests avec des citoyens **non réalisés** |
+| Publication | Build statique et instructions prêts ; hébergement distant et audit manuel **non réalisés** |
+| P2 | Exécution, historique, ventilation officielle et territorialisation hors données disponibles |
+
+Aucun contrôle automatisé ne vaut certification RGAA/WCAG complète. Les références de sources et les limites de redistribution doivent être vérifiées avant publication.

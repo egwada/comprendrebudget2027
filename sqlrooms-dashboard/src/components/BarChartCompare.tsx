@@ -40,8 +40,8 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
     <div className="panel">
       <h3>LFI 2026 → PLF 2027, mission par mission</h3>
       <p className="hint">
-        Top {data.length} en {creditType} 2027 (Md€). Barre claire : LFI 2026 · barre foncée : PLF 2027.
-        Cliquez sur une mission pour la détailler.
+        Top {data.length} en {creditType} 2027 (Md€). Barre claire : LFI 2026 · barre foncée : PLF
+        2027. Cliquez sur une mission pour la détailler.
       </p>
       {chartData.length === 0 ? (
         <div className="empty">Aucune donnée à afficher.</div>
@@ -52,7 +52,11 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
             layout="vertical"
             margin={{ top: 6, right: 64, left: 8, bottom: 6 }}
             onClick={(s: any) => {
-              const m = s?.activePayload?.[0]?.payload?.mission ?? s?.activeLabel;
+              const index = s?.activeTooltipIndex == null ? -1 : Number(s.activeTooltipIndex);
+              const m =
+                Number.isInteger(index) && index >= 0
+                  ? chartData[index]?.mission
+                  : s?.activePayload?.[0]?.payload?.mission;
               if (m) onSelect(m);
             }}
           >
@@ -77,7 +81,9 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
                 return (
                   <div className="tt">
                     <b>{it.mission}</b>
-                    <div style={{ marginTop: 4 }}>LFI 2026 : <b>{fmtEUR(it['LFI 2026'] * 1e9)}</b></div>
+                    <div style={{ marginTop: 4 }}>
+                      LFI 2026 : <b>{fmtEUR(it['LFI 2026'] * 1e9)}</b>
+                    </div>
                     <div className="tt-muted">PLF 2027 : {fmtEUR(it['PLF 2027'] * 1e9)}</div>
                   </div>
                 );

@@ -46,6 +46,15 @@ class BudgetDataTests(unittest.TestCase):
                     programs[r['mission']] += r[col]
             self.assertEqual(totals, dict(programs), col)
 
+    def test_reference_totals(self):
+        # Références indépendantes figées lors de la lecture du récapitulatif PDF.
+        expected = {('CP', 2026): 593890071649, ('CP', 2027): 615139875333,
+                    ('AE', 2026): 620249232626, ('AE', 2027): 632868821128}
+        for (credit, year), amount in expected.items():
+            self.assertEqual(sum(r['montant'] for r in self.facts
+                                 if r['type_credit'] == credit and r['annee'] == year
+                                 and r['programme'] == '(total mission)'), amount)
+
     def test_fact_contract_and_no_duplicates(self):
         keys = [(r['mission'], r['programme'], r['type_credit'], r['annee']) for r in self.facts]
         self.assertEqual(len(keys), len(set(keys)))

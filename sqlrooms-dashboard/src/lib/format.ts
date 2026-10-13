@@ -35,12 +35,17 @@ export function evolutionLabel(prev: number, curr: number): string {
 
 /** Palette qualitative (Tableau 10) — lisible en treemap, stable par mission. */
 const PALETTE = [
-  '#4E79A7', '#F28E2B', '#59A14F', '#E15759', '#76B7B2',
-  '#EDC948', '#B07AA1', '#D37295', '#9C755F', '#BAB0AC',
+  '#4E79A7',
+  '#F28E2B',
+  '#59A14F',
+  '#E15759',
+  '#76B7B2',
+  '#EDC948',
+  '#B07AA1',
+  '#D37295',
+  '#9C755F',
+  '#BAB0AC',
 ];
-
-/** Couleurs de fond trop claires pour un libellé blanc. */
-const LIGHT_BG = new Set(['#EDC948', '#BAB0AC', '#76B7B2']);
 
 export function colorFor(name: string): string {
   let h = 0;
@@ -49,7 +54,11 @@ export function colorFor(name: string): string {
 }
 
 export function labelColorFor(bg: string): string {
-  return LIGHT_BG.has(bg) ? '#1b1b1f' : '#ffffff';
+  const rgb = [1, 3, 5]
+    .map((i) => parseInt(bg.slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  const luminance = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  return 1.05 / (luminance + 0.05) >= 4.5 ? '#ffffff' : '#000000';
 }
 
 export function truncate(s: string, n: number): string {

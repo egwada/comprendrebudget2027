@@ -7,6 +7,7 @@ Dépendances Python : websocket-client. Le build doit être préparé auparavant
 import argparse
 import collections
 import csv
+import io
 import json
 import shutil
 import socket
@@ -148,6 +149,16 @@ class Browser:
                 time.sleep(.1)
 
 
+def audit_accessibility(browser, label):
+    source = ROOT / 'sqlrooms-dashboard/node_modules/axe-core/axe.min.js'
+    if not source.is_file():
+        check(f'axe-core {label}', False, 'Exécuter npm ci dans sqlrooms-dashboard')
+        return
+    browser.js(source.read_text(encoding='utf-8') + '; true')
+    violations = browser.js("axe.run(document, {runOnly: {type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']}}).then(r => r.violations.map(v => ({id: v.id, impact: v.impact, nodes: v.nodes.map(n => n.target)})))")
+    check(f'axe-core WCAG A/AA : {label}', not violations, json.dumps(violations, ensure_ascii=False) if violations else '')
+
+
 def run_ui_checks(browser, exp):
     b = browser
     b.wait("!!document.querySelector('.kpis')")
@@ -155,6 +166,13 @@ def run_ui_checks(browser, exp):
     check('titre citoyen', b.js("document.querySelector('h1').innerText.includes('Où va l’argent')"))
     check('avertissement crédits non exécutés', b.js("document.body.innerText.includes('Ils ne représentent pas encore les dépenses effectivement réalisées.')"))
     check('données fictives annoncées', b.js("document.body.innerText.includes('fictif / simulé')"))
+    b.wait("document.querySelector('.plfss-table tbody')?.rows.length === 17")
+    audit_accessibility(b, 'vue citoyenne')
+    b.js("window.__exportBlob = null; window.__createURL = URL.createObjectURL; URL.createObjectURL = blob => { window.__exportBlob = blob; return window.__createURL(blob); }")
+    b.js("document.querySelector('.skip-link').focus()")
+    b.key('Tab')
+    check('tabulation : filtres accessibles', b.js("document.activeElement === document.querySelector('.seg button')"))
+    check('focus visible', b.js("getComputedStyle(document.activeElement).outlineStyle === 'solid'"))
     for ct in ('CP', 'AE'):
         b.click(f'.seg button:nth-child({1 if ct == "CP" else 2})')
         b.wait(f"document.querySelector('.kpis')?.innerText.includes('{fmt(exp[ct]['t27'])}')")
@@ -166,6 +184,11 @@ def run_ui_checks(browser, exp):
     b.click('.seg button:first-child')
     b.wait(f"document.querySelector('.kpis')?.innerText.includes('{fmt(exp['CP']['t27'])}')")
     check('cinq postes principaux', b.js("document.querySelectorAll('.top5 button').length") == 5)
+    top_five = sorted(exp['CP']['missions'], key=lambda n: exp['CP']['missions'][n][1], reverse=True)[:5]
+    check('cinq postes : ordre et montants exacts', b.js("[...document.querySelectorAll('.top5 .name')].map(e => e.innerText)") == top_five and b.js("[...document.querySelectorAll('.top5 .val')].map(e => e.innerText)") == [fmt(exp['CP']['missions'][n][1]) for n in top_five])
+    hundred = b.js("[...document.querySelectorAll('.hundred b')].map(e => e.innerText)")
+    amounts = [float(s.replace('€', '').replace(',', '.').strip()) for s in hundred]
+    check('pour 100 € : parts des cinq postes et reste', all(abs(amounts[i] - exp['CP']['missions'][name][1] / exp['CP']['t27'] * 100) <= .005 for i, name in enumerate(top_five)) and abs(sum(amounts) - 100) <= .03)
     check('classement top = plus grande mission', exp['CP']['top'] in b.js("document.querySelector('.horizontal-ranking li').innerText"))
     check('pour 100 € avec périmètre', b.js("document.querySelector('.hundred').innerText.includes('Autres missions')"))
     check('graphiques secondaires masqués par défaut', b.js("document.querySelectorAll('.tm-cell').length") == 0)
@@ -191,32 +214,62 @@ def run_ui_checks(browser, exp):
     check('fiche mission : part du budget complet malgré filtre', '0,7 %' in b.js("document.querySelector('.mission-facts').innerText"))
     check('fiche mission : focus sur titre', b.js("document.activeElement.id") == 'mission-title')
     check('fiche mission : sources 309 et 310', b.js("document.querySelector('.mission-detail').innerText.includes('309') && document.querySelector('.mission-detail').innerText.includes('310')"))
+    audit_accessibility(b, 'fiche mission')
+    check('fiche mission : contexte masqué', b.js("!document.querySelector('.budget-context')"))
+    b.click('.mission-detail .export-btn')
+    records = list(csv.DictReader(io.StringIO(b.js('window.__exportBlob.text()').lstrip('\ufeff'))))
+    check('export programmes : dix faits Investir 2030', len(records) == 10 and all(r['mission'] == 'Investir pour la France de 2030' for r in records))
+    check('export programmes : montant réconcilié', sum(int(r['montant']) for r in records if r['annee'] == '2027') == 3999870000)
+    b.click('.seg button:nth-child(2)')
+    b.wait("document.querySelector('.mission-detail table tbody')?.rows.length === 5")
+    check('Investir 2030 : AE zéro conservé', b.js("document.querySelector('.mission-facts').innerText.includes('0 €')"))
+    b.click('.seg button:first-child')
+    b.wait("document.querySelector('.mission-facts')?.innerText.includes('4 Md€')")
     b.js("document.querySelector('.back-btn').focus()")
     b.key(' ', 'Space', windowsVirtualKeyCode=32)
     b.wait("!!document.querySelector('.horizontal-ranking')")
     check('retour clavier : focus restauré', b.js("document.activeElement.className") == 'mission-link')
     check('retour : recherche conservée', b.js("document.querySelector('.search-input input').value") == 'Investir')
     b.click('.reset-btn')
-    b.js("window.__exportBlob = null; window.__createURL = URL.createObjectURL; URL.createObjectURL = blob => { window.__exportBlob = blob; return window.__createURL(blob); }")
     b.click('.missions-export')
     exported = b.js("window.__exportBlob.text()")
-    import io
     records = list(csv.DictReader(io.StringIO(exported.lstrip('\ufeff'))))
     check('export CSV : 64 lignes sourcées', len(records) == 64 and all(r['source_document'] == 'l17b3210_projet-loi.pdf' for r in records))
     check('export CSV : total identique au KPI', sum(int(r['montant']) for r in records if r['annee'] == '2027') == exp['CP']['t27'])
+    b.js("document.querySelector('table.tbl thead th:nth-child(3) button').focus()")
+    b.key('Enter')
+    check('tri clavier Entrée', b.js("document.querySelector('table.tbl thead th:nth-child(3)').getAttribute('aria-sort')") == 'ascending')
+    b.key(' ', 'Space')
+    check('tri clavier Espace', b.js("document.querySelector('table.tbl thead th:nth-child(3)').getAttribute('aria-sort')") == 'descending')
     b.click('.expert-toggle')
     b.wait("document.querySelectorAll('.tm-cell').length === 32")
     check('vue experte : 32 cellules treemap', b.js("document.querySelectorAll('.tm-cell').length") == 32)
+    check('treemap : montant dans le libellé accessible', fmt(exp['CP']['missions'][exp['CP']['top']][1]) in b.js("document.querySelector('.tm-cell').getAttribute('aria-label')"))
     check('vue experte : 28 barres comparatives', b.js("document.querySelectorAll('.recharts-bar-rectangle').length") == 28)
     b.wait("document.querySelector('.raw-export')?.innerText.includes('668')")
     check('vue experte : 668 faits bruts', b.js("document.querySelector('.raw-export').innerText.includes('668')"))
     check('vue experte : réconciliation explicite', b.js("document.querySelector('.quality-summary').innerText.includes('Aucun écart')"))
-    b.click('.tm-cell')
+    audit_accessibility(b, 'vue experte')
+    b.click('.raw-export')
+    records = list(csv.DictReader(io.StringIO(b.js('window.__exportBlob.text()').lstrip('\ufeff'))))
+    check('export brut : 668 faits et qualité', len(records) == 668 and all(r['qualite_extraction'] in ('extrait_pdf', 'cellules_vides_zero') for r in records))
+    b.js("document.querySelector('.tm-cell').focus()")
+    b.key('Enter')
     b.wait("!!document.querySelector('.mission-detail')")
     check('treemap : navigation mission', 'Remboursements' in b.js("document.querySelector('#mission-title').innerText"))
     b.js('history.back()')
     b.wait("!!document.querySelector('.horizontal-ranking')")
     check('retour navigateur : missions', b.js("document.querySelector('table.tbl tbody').rows.length") == 32)
+    b.wait("document.querySelectorAll('.recharts-bar-rectangle').length === 28")
+    b.js("document.querySelector('.recharts-bar-rectangle').scrollIntoView({block: 'center'})")
+    coords = b.js("(() => { const r = document.querySelector('.recharts-bar-rectangle').getBoundingClientRect(); return {x: r.x + r.width/2, y: r.y + r.height/2}; })()")
+    b.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', **coords})
+    time.sleep(.2)
+    b.command('Input.dispatchMouseEvent', {'type': 'mousePressed', 'button': 'left', 'clickCount': 1, **coords})
+    b.command('Input.dispatchMouseEvent', {'type': 'mouseReleased', 'button': 'left', 'clickCount': 1, **coords})
+    b.wait("!!document.querySelector('.mission-detail')")
+    check('comparatif : clic ouvre la mission au libellé complet', b.js("document.querySelector('#mission-title').innerText") == exp['CP']['top'])
+    b.click('.back-btn')
     b.wait("document.querySelectorAll('.ctx-card').length === 6 && document.querySelector('.plfss-table tbody')?.rows.length === 17")
     context = b.js("document.querySelector('.budget-context').innerText")
     check('contexte : 43 et 54 Md€ séparés', '43 Md€' in context and '54 Md€' in context and 'trajectoire à politique inchangée' in context)
@@ -227,16 +280,62 @@ def run_ui_checks(browser, exp):
     b.type('Défense')
     check('contexte indépendant des filtres', b.js("document.querySelectorAll('.ctx-card').length") == 6 and b.js("document.querySelector('.plfss-table tbody').rows.length") == 17)
     b.click('.reset-btn')
+    b.click('.context-export')
+    records = list(csv.DictReader(io.StringIO(b.js('window.__exportBlob.text()').lstrip('\ufeff'))))
+    check('export contexte : six chiffres et dérivation signalée', len(records) == 6 and any(r['qualite_extraction'] == 'derive' for r in records))
     b.click('.plfss-export')
     exported = b.js('window.__exportBlob.text()')
     records = list(csv.DictReader(io.StringIO(exported.lstrip('\ufeff'))))
     check('export PLFSS non additif et sourcé', len(records) == 17 and all(r['source_document'] == 'plfss_2027_texte.pdf' for r in records))
     for name in ('l17b3210_projet-loi.pdf', 'plfss_2027_texte.pdf'):
         check(f'PDF source servi : {name}', b.js(f"fetch('/sources/{name}').then(r => r.ok && r.headers.get('content-type').includes('pdf'))"))
+    b.click('.expert-toggle')
+    b.command('Emulation.setDeviceMetricsOverride', {'width': 375, 'height': 812, 'deviceScaleFactor': 1, 'mobile': True})
+    time.sleep(.2)
+    check('mobile : pas de débordement de page', b.js('document.documentElement.scrollWidth <= innerWidth'))
+    check('mobile : recherche visible', b.js("document.querySelector('.search-input input').getBoundingClientRect().width <= innerWidth"))
+    audit_accessibility(b, 'mobile 375 px')
+    b.command('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]})
+    check('réduction des animations', b.js("matchMedia('(prefers-reduced-motion: reduce)').matches && getComputedStyle(document.querySelector('.mcard')).transitionDuration === '0s'"))
+    b.command('Emulation.setDeviceMetricsOverride', {'width': 640, 'height': 450, 'deviceScaleFactor': 2, 'mobile': False})
+    b.js("document.documentElement.style.zoom = '2'")
+    check('zoom 200 % : pas de débordement de page', b.js('document.documentElement.scrollWidth <= innerWidth'))
+    b.js("document.documentElement.style.zoom = ''")
+    b.command('Emulation.clearDeviceMetricsOverride')
     b.click('a[href="/?page=methodologie"]')
     b.wait("!!document.querySelector('.glossary')")
     check('page méthodologie et glossaire', b.js("document.querySelectorAll('.glossary dt').length") == 10)
     check('méthodologie sans WASM', b.js("!performance.getEntriesByType('resource').some(r => r.name.includes('.wasm'))"))
+    audit_accessibility(b, 'méthodologie')
+
+
+def run_quality_checks(browser, port, exp):
+    """Altère uniquement le CSV du build, puis restaure ses octets, même en échec."""
+    path = ROOT / 'sqlrooms-dashboard/dist/data/fact_credits.csv'
+    original = path.read_bytes()
+    rows = list(csv.DictReader(io.StringIO(original.decode('utf-8'))))
+    row = next(r for r in rows if r['mission'] == 'Investir pour la France de 2030'
+               and r['programme'] != '(total mission)' and r['type_credit'] == 'CP' and r['annee'] == '2027')
+    row['montant'] = str(int(row['montant']) - 1000000)
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=list(rows[0]))
+    writer.writeheader()
+    writer.writerows(rows)
+    try:
+        path.write_text(output.getvalue(), encoding='utf-8')
+        browser.command('Network.enable')
+        browser.command('Network.setCacheDisabled', {'cacheDisabled': True})
+        browser.command('Page.navigate', {'url': f'http://localhost:{port}/?quality-test=1'})
+        browser.wait("!!document.querySelector('.quality-alert')")
+        check('écart injecté : KPI reste le total imprimé', fmt(exp['CP']['t27']) in browser.js("document.querySelector('.kpis').innerText"))
+        browser.type('Investir')
+        browser.click('.mission-link')
+        browser.wait("!!document.querySelector('.mission-detail .quality-alert')")
+        check('écart injecté : fiche mission alerte 2027 +1 M€', '+1 M€' in browser.js("document.querySelector('.mission-detail .quality-alert').innerText"))
+        check('écart injecté : total mission non remplacé', '4 Md€' in browser.js("document.querySelector('.mission-facts').innerText"))
+    finally:
+        path.write_bytes(original)
+    check('CSV du build restauré après test qualité', path.read_bytes() == original)
 
 
 def main():
@@ -252,6 +351,7 @@ def main():
         exp = expected_from_csv()
         browser = Browser(args.port)
         run_ui_checks(browser, exp)
+        run_quality_checks(browser, args.port, exp)
     except Exception as e:
         check('exécution des tests', False, str(e))
     finally:

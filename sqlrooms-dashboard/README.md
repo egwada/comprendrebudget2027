@@ -1,32 +1,64 @@
-# React + TypeScript + Vite
+# Tableau de bord budgétaire citoyen
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Prototype React/TypeScript + DuckDB-WASM, à partir des PDF locaux PLF/PLFSS 2027. **Le PLF fourni est fictif / simulé : ce n’est pas un budget officiel réel.**
 
-Currently, two official plugins are available:
+## Installation et lancement
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Prérequis : Node 22.18+ (tests TypeScript natifs), npm, Python 3.10+, `pdfplumber`, `websocket-client` et Chromium pour les tests headless.
 
-## React Compiler
+Les deux PDF non versionnés doivent être présents à la racine du dépôt :
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `l17b3210_projet-loi.pdf` ;
+- `plfss_2027_texte.pdf`.
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+# depuis sqlrooms-dashboard/
+npm ci
+python3 -m pip install pdfplumber websocket-client
+npm run prepare:data
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`prepare:data` régénère les crédits, copie les deux CSV curatés de `../sources/`, et rend les PDF disponibles sous `public/sources/`. Il échoue explicitement si une source manque. Les fichiers générés ne sont pas versionnés.
+
+## Validation
+
+```bash
+npm test                 # 5 tests : formatage, évolution, contraste, CSV
+npm run test:data       # 5 régressions sur le PDF réel local
+npm run lint
+npm run build:publication
+npm run test:headless   # 81 contrôles sur le build servi en statique
+# si le port par défaut 8901 est occupé :
+python3 ../scripts/validate_headless.py --port 8928
+```
+
+Le navigateur headless utilise un profil isolé et un port CDP libre. Les tests comparent les KPI aux totaux mission via une agrégation Python indépendante. Ils injectent aussi un écart de 1 M€ dans le CSV du **build uniquement**, puis restaurent ses octets en `finally`, pour vérifier les alertes de qualité.
+
+## Fonctionnalités
+
+- vue citoyenne CP par défaut, classement horizontal, cinq premiers postes, lecture pour 100 € ;
+- AE, recherche, réinitialisation et dénominateurs explicités ;
+- fiches mission, programmes, évolution et pages PDF ;
+- tableaux accessibles et exports CSV sourcés ;
+- mode expert : treemap, comparaison, données brutes, SQL, contrôle qualité ;
+- chiffres de contexte 43/54 Md€ et mesures PLFSS séparés, sans total artificiel ;
+- page `/?page=methodologie`, glossaire, sources et limites ;
+- navigation clavier, focus restauré, responsive, réduction des animations.
+
+Les graphiques sont chargés à la demande. La méthodologie ne charge ni DuckDB ni le WASM (~35 Mo pour le dashboard). Aucun service distant n’est nécessaire après installation et préparation.
+
+## Publication statique
+
+```bash
+npm run build:publication
+npm run preview -- --host 127.0.0.1
+```
+
+Publier **tout `dist/`**, y compris `data/`, `sources/` et `duckdb/`, sur un hébergement HTTPS à la **racine du domaine** (les chemins sont absolus). Servir `.wasm` avec `application/wasm`, `.js` avec un type JavaScript, `.pdf` avec `application/pdf`. Le worker et le WASM doivent rester sur la même origine. Aucun routage serveur spécial : la méthodologie utilise un paramètre de requête et les missions un fragment d’URL.
+
+Vérifier les droits de redistribution des PDF et garder le bandeau de démonstration. Ne pas conserver les CSV avec un cache immutable : leurs chemins ne sont pas versionnés. Les assets hachés peuvent être mis en cache longtemps.
+
+**Aucun déploiement distant n’est effectué automatiquement.** Il reste à choisir l’hébergeur et à réaliser les tests utilisateurs et l’audit manuel RGAA. Les contrôles axe-core automatisés ne constituent pas une certification.
+
+Documentation : `../docs/validation.md`, `../docs/methodologie-budget.md`, `../docs/contrat-donnees.md`, `../docs/roadmap-dashboard-citoyen.md`.

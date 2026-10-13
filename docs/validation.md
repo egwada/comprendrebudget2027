@@ -1,94 +1,84 @@
-# Validation du tableau de bord PLF 2027 — état initial
+# Validation — tableau de bord budgétaire citoyen
 
-**Date** : 2026-10-14 · **Commits validés** : `159fb3a` (UI) → `0dca203` (fix treemap) → `9314c55` (note 54 Md€)
-**Script rejouable** : `scripts/validate_headless.py` (chromium headless + CDP, exit code 0/1)
+**Résultat : 81/81 contrôles headless PASS, 5/5 tests de données PASS, 5/5 tests unitaires PASS.** TypeScript/Vite et lint passent sans avertissement. État livré sur les branches de la feuille de route, intégration `feat/dashboard-citoyen`.
+
+Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vue initiale. Les défauts d’extraction signalés à l’époque sont corrigés, et les KPI utilisent désormais les totaux mission imprimés, pas la somme des programmes extraits.
+
+## Rejouer
+
+```bash
+cd sqlrooms-dashboard
+npm ci
+npm run prepare:data
+npm test
+npm run test:data
+npm run lint
+npm run build:publication
+npm run test:headless
+# port alternatif si 8901 est occupé :
+python3 ../scripts/validate_headless.py --port 8928
+```
+
+Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.18+, deux PDF locaux. Les données curatées sont versionnées sous `sources/`. Le build sert les sources PDF, les CSV et DuckDB sur la même origine.
 
 ## Méthode
 
-1. **Partie A — valeurs attendues** : agrégation Python **indépendante** de `data/staging/fact_credits.csv` (aucun DuckDB/SQL impliqué).
-2. **Partie B — UI réelle** : `dist/` servi en statique, piloté via CDP (clics, saisie, lectures DOM), comparé aux valeurs attendues.
-3. **Partie C — intégrité des données** : croise lignes `(total mission)` vs sommes de programmes par mission × type × année.
+- **Extraction réelle du PDF** : tests de hiérarchie, libellés, Investir 2030, types, unicité, contrat et réconciliation des quatre colonnes. Valeurs de référence figées indépendamment du calcul UI.
+- **Agrégation Python indépendante** : calcul attendu depuis les lignes total mission du CSV, sans SQL ni DuckDB ; comparaison avec les KPI et exports du navigateur.
+- **UI réelle** : `dist/` servi en statique ; Chromium avec profil isolé et port CDP libre. Clics, clavier natif via CDP, saisie et navigation.
+- **Régression qualité** : injection d’un écart de 1 M€ dans un programme CP 2027 du CSV du build. Le KPI reste égal au total imprimé et la fiche expose l’écart. Les octets du CSV sont restaurés en `finally`. Cache désactivé pour ce scénario.
+- **Accessibilité** : axe-core (tags WCAG 2 A/AA, 2.1 AA, 2.2 AA) sur vue citoyenne, fiche mission, vue experte, mobile et méthodologie ; tests clavier/focus et contraste de toute la palette treemap.
 
-## Résultat fonctionnel : 26/26 PASS
+## Références numériques (budget général brut)
 
-| Domaine | Contrôles |
+| Type | LFI 2026, euros | PLF 2027, euros | Affichage arrondi |
+|---|---:|---:|---|
+| CP | 593 890 071 649 | 615 139 875 333 | 593,9 → 615,1 Md€, +21,2 Md€, +3,6 % |
+| AE | 620 249 232 626 | 632 868 821 128 | 620,2 → 632,9 Md€ |
+
+- 32 missions, 135 programmes/dotations (y compris les lignes sans crédits), 668 faits (32 + 135) × 2 années × 2 types.
+- Investir pour la France de 2030 : 3 999 870 000 € CP 2027, total p. 309, cinq programmes p. 309–310. AE 2027 : zéro.
+- Les totaux mission et les sommes des programmes sont égaux dans chaque colonne, pour chaque mission. Aucun écart actuel ; mécanisme d’alerte validé par injection.
+- Remboursements et dégrèvements : premier poste CP 2027, 144,5 Md€. Inclus dans le dénominateur brut, pas assimilé à des services publics.
+
+## Couverture fonctionnelle
+
+| Domaine | Contrôles validés |
 |---|---|
-| Chargement | pas d'écran d'erreur ; KPI affichés |
-| KPI CP | 609,8 Md€ PLF 2027 · 588,7 Md€ LFI 2026 · +21,1 Md€ (+3,6 %) · dont dette +14 Md€, hors dette +7,2 Md€ (+1,4 %) · 1ᵉʳ poste = Remboursements et dégrèvements |
-| KPI AE (bascule) | 631,7 Md€ · 619,1 Md€ ; hint du graphique suit la bascule |
-| Treemap | 31 cellules = 31 missions ; clic → drill-down programmes ; chip de sélection |
-| Barres | top 14 missions × 2 séries (LFI/PLF) |
-| Tableau | 32 lignes (31 missions + total) ; tri asc/desc sur PLF 2027 (min = Crédits non répartis) ; clic ligne → drill-down |
-| Recherche | « Défense » → 1 mission + total, KPI filtrés = 73,2 Md€ ; recherche vide → message « Aucune mission » |
-| Navigation | bouton retour ← → 32 lignes missions |
-| Contenu | note de lecture « 54 Md€ d'efforts » présente |
+| Entrée | Titre citoyen, avertissement prévision/exécution, caractère fictif annoncé |
+| KPI | CP/AE 2026/2027, delta, 32 missions, premier poste, recherche et réinitialisation |
+| Accueil | Cinq postes, classement horizontal, calcul pour 100 €, graphiques masqués par défaut |
+| Tableaux | 32 lignes missions, total en pied, tri asc/desc et `aria-sort`, tri Entrée/Espace |
+| Fiche mission | Investir 2030 et cinq programmes, total imprimé, part du budget complet, pages 309/310, focus, AE zéro |
+| Navigation | Entrée depuis tableau/treemap et clic comparatif avec libellé complet, retour Espace, focus restauré, recherche conservée, retour navigateur |
+| Expert | 32 cellules treemap, 28 barres comparatives, 668 faits bruts, réconciliation explicite |
+| Exports | Classement 64 lignes, programmes 10 lignes pour Investir, brut 668, contexte 6 et dérivé marqué, PLFSS 17 sans total |
+| Contexte | 43/54 Md€ distincts, année/unité/périmètre/source, indépendance des filtres |
+| PLFSS | 17 mesures, 278,7 / 5,1 / −12,7 Md€, réserves non-additivité et ventilation non publiée |
+| Sources | Deux PDF réellement servis avec type MIME PDF et liens vers les pages |
+| Accessibilité | Cinq audits axe-core sans violation détectée, tabulation, focus visible, mobile 375 px sans débordement, zoom CSS émulé à 200 %, reduced-motion |
+| Robustesse | Absence de doublons, synchronisation des CSV, écart injecté visible sans changement des KPI, restauration du build |
 
-## Valeurs de référence (chaîne complète CSV → DuckDB → SQL → UI)
+## Performance
 
-| | LFI 2026 | PLF 2027 | Δ |
-|---|---|---|---|
-| CP (31 missions affichées) | 588,7 Md€ | 609,8 Md€ | +3,6 % |
-| AE | 619,1 Md€ | 631,7 Md€ | +2,0 % |
-| Top poste (CP 2027) | — | Remboursements et dégrèvements : 144,5 Md€ (23,7 %) | −0,8 % |
-| Défense (CP 2027) | 66,5 Md€ | 73,2 Md€ | +6,7 Md€ |
+Les graphiques Recharts sont chargés à la demande ; DuckDB et le dashboard sont séparés du bundle d’entrée. Plus de chunk JS > 500 Ko après découpage. La page méthodologie ne charge pas le WASM. Le dashboard charge encore environ 35 Mo de WASM au premier accès ; ce coût nécessite une mesure sur connexion lente avant une publication à grande audience.
 
-## Avertissements de données (non bloquants, documentés)
+## Sources utilisées
 
-La validation a mis au jour des **défauts d'extraction du PDF** (parser `extract_budget.py`, continuations multi-lignes) :
+Empreintes SHA-256 des PDF locaux testés :
 
-1. **3 noms de missions tronqués** — les lignes programmes sont attribuées au nom tronqué, la ligne `(total mission)` au nom complet :
-   - « Gestion des finances publiques et lutte contre **les fraudes** »
-   - « Travail, emploi et administration des **ministères sociaux** »
-   - « Administration générale et territoriale de **l'État** »
+```text
+PLF    132274b83bed4861a9e1a147d0d16abda2d729cdad2373ef804e26747c43d881
+PLFSS  71010873c0af8a776436e3c22628d3a1dc048ea406632afa2107dc83be7c598d
+```
 
-2. **Mission « Investir pour la France de 2030 d'innovation » absente du dashboard** : sa ligne total existe (8,8 Md€) mais ses lignes programmes ont été perdues à l'extraction → le dashboard compte **31 missions au lieu de 32**.
+## Réserves et travaux externes
 
-3. **≈ 4,0 Md€ de lignes programmes manquantes** vs les totaux du PDF (~0,3 %), principalement : Régimes sociaux et de retraite (−1,3 Md€), Agriculture et alimentation (−0,9 Md€), Écologie (−0,8 Md€), Engagements financiers (−0,6 Md€), Recherche (−0,3 Md€).
+- **Le PLF est fictif / simulé** (ADR-001). Aucun budget officiel réel ne peut être déduit de cette démonstration.
+- Les montants sont des crédits prévus, pas des dépenses exécutées ; euros courants, pas corrigés de l’inflation.
+- La ventilation exacte PLF/PLFSS des 43 Md€ reste inconnue ; aucun total de mesures recoupées n’est calculé.
+- Axe-core ne contrôle qu’une partie des critères : **aucune certification RGAA/WCAG complète n’est revendiquée**. Audits lecteur d’écran, zoom navigateur natif et mobile réel à réaliser.
+- Tests citoyens **non réalisés** : [protocole](tests-utilisateurs-dashboard.md). L’objectif « moins d’une minute » n’est pas encore validé avec des personnes.
+- Build statique prêt ; **aucun déploiement distant effectué** faute de cible d’hébergement et de validation des droits des sources.
 
-**Conséquence sur les chiffres affichés** : les totaux du dashboard sont la somme des lignes programmes extraites — cohérents en interne (UI = SQL = CSV), mais légèrement **sous-estimés** (~ −1 Md€ par type/année) par rapport aux totaux imprimés du récapitulatif.
-
-## Recommandation pour l'itération suivante
-
-Corriger `extract_budget.py` (continuations multi-lignes des libellés en gras), puis **utiliser les lignes `(total mission)` directement pour les agrégats par mission** (elles sont complètes et déjà présentes dans la table), en gardant les lignes programmes pour le drill-down : cela éliminerait d'un coup les 3 écarts (noms tronqués, mission manquante, sous-estimation des totaux).
-
-## Conclusion
-
-**Le tableau de bord est VALIDÉ en l'état** : build propre (tsc + vite), chargement DuckDB-WASM robuste (init idempotente, WASM servi même-origine), toutes les interactions fonctionnent, et les valeurs affichées correspondent exactement aux données extraites. Les réserves portent exclusivement sur la qualité d'extraction amont, quantifiées ci-dessus, à traiter dans l'évolution suivante.
----
-
-# Addendum du 2026-10-14 — PLFSS : faire apparaître la part sécurité sociale des 43 Md€
-
-**Commits** : `2178e0d` (ADR-004) → validation étendue **38/38 PASS** (`scripts/validate_headless.py`)
-
-## Nouvelle source : texte du PLFSS 2027
-
-- `plfss_2027_texte.pdf` (121 p., NOR CPPX2620963L/Bleue-1, texte soumis au Conseil des
-  ministres) ajouté au repo à côté du PLF tome 1.
-- `data/staging/fact_mesures_plfss.csv` : **17 mesures chiffrées curatées page par page**
-  (branche, article, montant en Md€, effet, année, page source, note) → table DuckDB
-  `fact_mesures_plfss` (ADR-004 : curation, comme ADR-003).
-
-## Nouveaux contrôles (7) : section « Et les 43 Md€ côté sécurité sociale — le PLFSS 2027 »
-
-| # | Contrôle | Attendu |
-|---|---|---|
-| 17 | Section présente | « 43 MD€ CÔTÉ SÉCURITÉ SOCIALE — PLFSS 2027 » |
-| 18 | ONDAM affiché | 278,7 Md€ |
-| 19 | Économies ONDAM | 5,1 Md€ |
-| 20 | Solde ROBSS | −12,7 Md€ |
-| 21 | Réserve anti-addition | « ne pas additionner » |
-| 22 | Réserve ventilation | « non publiée » |
-| 23 | Lignes de mesures | 17 |
-
-Plus : la section est **masquée en vue programmes** (drill-down) — contrôlé.
-La carte contexte `mesures_2027` (43 Md€) pointe désormais vers cette section au lieu
-d'écarter le PLFSS du périmètre.
-
-## Réserves de données inchangées
-
-La ventilation exacte des 43 Md€ entre PLF et PLFSS **n'est publiée dans aucun document
-disponible** (vérifié : aucun chiffre « dont X côté PLF/Y côté PLFSS » dans le tome 1 ni le
-texte PLFSS ; dossier AN « PLFSS_2027 » encore vide à date). Les mesures PLFSS affichées
-se recoupent (montée en charge 2026 vs économies nouvelles 2027) : le tableau n'affiche
-**aucun total additionné**, les repères agrégés sont ceux du texte (solde −12,7 Md€,
-rendement ~9 Md€ dépenses, > 6 Md€ recettes, ~3 Md€ reprise en base).
+Méthode et décisions : [méthodologie](methodologie-budget.md), [contrat](contrat-donnees.md), [ADR-005](adr/005-agregats-citoyens.md).

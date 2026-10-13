@@ -13,15 +13,37 @@ interface CellItem extends MissionRow {
 }
 
 const Cell = (props: any) => {
-  const { x, y, width, height, name, size } = props;
+  const { x, y, width, height, name } = props;
+  const amount = props.y2027 ?? props.value;
   if (width <= 0 || height <= 0 || !name) return null;
   const bg = colorFor(name);
   const fg = labelColorFor(bg);
   const showName = width > 64 && height > 30;
   const showVal = width > 110 && height > 52;
   return (
-    <g className="tm-cell" onClick={() => props?.onSelect?.(name)}>
-      <rect x={x} y={y} width={width} height={height} rx={5} fill={bg} stroke="#fff" strokeWidth={2} />
+    <g
+      className="tm-cell"
+      role="button"
+      tabIndex={0}
+      aria-label={`${name} : ${fmtEUR(amount)}. Voir les programmes`}
+      onClick={() => props?.onSelect?.(name)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          props?.onSelect?.(name);
+        }
+      }}
+    >
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx={5}
+        fill={bg}
+        stroke="#fff"
+        strokeWidth={2}
+      />
       {showName && (
         <text x={x + 9} y={y + 19} fill={fg} fontSize={11} fontWeight={600}>
           {truncate(name, 24)}
@@ -29,7 +51,7 @@ const Cell = (props: any) => {
       )}
       {showVal && (
         <text x={x + 9} y={y + 39} fill={fg} fontSize={14} fontWeight={800}>
-          {fmtEUR(size)}
+          {fmtEUR(amount)}
         </text>
       )}
     </g>
@@ -47,7 +69,8 @@ export default function TreemapChart({ data, total, onSelect }: Props) {
     <div className="panel">
       <h3>Où va l’argent : la carte des crédits</h3>
       <p className="hint">
-        Chaque rectangle est une mission, à l’échelle de ses crédits 2027. Cliquez pour zoomer sur ses programmes.
+        Chaque rectangle est une mission, à l’échelle de ses crédits 2027. Cliquez pour zoomer sur
+        ses programmes.
       </p>
       {chartData.length === 0 ? (
         <div className="empty">Aucune mission ne correspond à la recherche.</div>
@@ -65,8 +88,7 @@ export default function TreemapChart({ data, total, onSelect }: Props) {
               content={({ active, payload }: any) => {
                 if (!active || !payload?.length) return null;
                 const c =
-                  (payload[0].payload as CellItem) ??
-                  byName.get(payload[0].payload?.mission);
+                  (payload[0].payload as CellItem) ?? byName.get(payload[0].payload?.mission);
                 if (!c) return null;
                 return (
                   <div className="tt">

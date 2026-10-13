@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { initDuckDB } from './duckdb';
-import Dashboard from './components/Dashboard';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import Methodology from './components/Methodology';
+
+const Dashboard = lazy(() => import('./components/Dashboard'));
 
 const methodologyPage = new URLSearchParams(location.search).get('page') === 'methodologie';
 
@@ -12,7 +12,8 @@ function App() {
   useEffect(() => {
     if (methodologyPage) return;
     let cancelled = false;
-    initDuckDB()
+    import('./duckdb')
+      .then(({ initDuckDB }) => initDuckDB())
       .then(() => {
         if (!cancelled) setReady(true);
       })
@@ -32,8 +33,8 @@ function App() {
         <h2>❌ Erreur au lancement</h2>
         <p style={{ color: 'red', fontFamily: 'monospace' }}>{error}</p>
         <p style={{ color: '#666' }}>
-          Ouvre la console du navigateur (F12 → Console) pour les logs{' '}
-          <code>[DUCKDB]</code> de diagnostic.
+          Ouvre la console du navigateur (F12 → Console) pour les logs <code>[DUCKDB]</code> de
+          diagnostic.
         </p>
       </div>
     );
@@ -47,7 +48,11 @@ function App() {
     );
   }
 
-  return <Dashboard />;
+  return (
+    <Suspense fallback={<p role="status">Chargement du tableau de bord…</p>}>
+      <Dashboard />
+    </Suspense>
+  );
 }
 
 export default App;
