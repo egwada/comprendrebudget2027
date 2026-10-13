@@ -72,7 +72,7 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
     CREATE OR REPLACE VIEW v_missions_cp_2027 AS
     SELECT mission, SUM(montant) as total
     FROM fact_credits
-    WHERE type_credit = 'CP' AND annee = 2027 AND programme != '(total mission)'
+    WHERE type_credit = 'CP' AND annee = 2027 AND programme = '(total mission)' AND scope = 'budget_general'
     GROUP BY mission
     ORDER BY total DESC
   `);
@@ -81,7 +81,7 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
     CREATE OR REPLACE VIEW v_missions_cp_2026 AS
     SELECT mission, SUM(montant) as total
     FROM fact_credits
-    WHERE type_credit = 'CP' AND annee = 2026 AND programme != '(total mission)'
+    WHERE type_credit = 'CP' AND annee = 2026 AND programme = '(total mission)' AND scope = 'budget_general'
     GROUP BY mission
     ORDER BY total DESC
   `);
@@ -107,6 +107,16 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
     FROM fact_credits
     WHERE programme != '(total mission)'
     GROUP BY mission, programme
+  `);
+
+  await c.query(`
+    CREATE OR REPLACE VIEW v_qualite AS
+    SELECT mission, type_credit, annee,
+      SUM(CASE WHEN programme = '(total mission)' THEN montant ELSE 0 END)::DOUBLE AS total_mission,
+      SUM(CASE WHEN programme != '(total mission)' THEN montant ELSE 0 END)::DOUBLE AS total_programmes,
+      (total_mission - total_programmes)::DOUBLE AS ecart
+    FROM fact_credits WHERE scope = 'budget_general'
+    GROUP BY mission, type_credit, annee
   `);
 
   console.log('[DUCKDB] Views created — init complete');

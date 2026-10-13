@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 *.log
+__pycache__/
+*.pyc
 
 # Entire
 .entire/tmp/
@@ -17,3 +19,5 @@ data/
 # IDE
 .vscode/
 .idea/
+# CocoIndex Code (ccc)
+/.cocoindex_code/

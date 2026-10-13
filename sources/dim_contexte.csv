@@ -1,0 +1,7 @@
+cle,libelle,valeur,unite,annee,perimetre,source_page,note
+total_efforts,"Ensemble des efforts de redressement (mesures 2027 + montée en charge 2026 et antérieures)",54,Md€,2027,"Administrations publiques",12,"Rapport général : 43 Md€ de mesures dans les textes financiers 2027 + montée en charge des mesures prises en 2026 et antérieurement"
+mesures_2027,"Mesures de redressement dans les textes financiers 2027 (PLF + PLFSS)",43,Md€,2027,"Administrations publiques",12,"Inclut la sécurité sociale (PLFSS) — la part sécurité sociale est détaillée dans la section « Mesures de redressement — sécurité sociale » ; ventilation exacte PLF / PLFSS non publiée à ce stade"
+montee_en_charge,"Montée en charge des mesures prises en 2026 et antérieurement",11,Md€,2027,"Administrations publiques",12,"Solde dérivé : 54 − 43"
+depense_sous_norme,"Dépense totale sous norme — périmètre des dépenses de l'État (PDE)",511,Md€,2027,"État",13,"Budget général + budgets annexes + comptes spéciaux (dont pensions) + PSR ; hors charge de la dette"
+deficit_public,"Solde public",-5,"pt de PIB",2027,"Administrations publiques",12,"En amélioration de +0,4 pt par rapport à 2026 (−5,4 % révisé)"
+dette_publique,"Dette publique",121.7,"% du PIB",2027,"Administrations publiques",12,""

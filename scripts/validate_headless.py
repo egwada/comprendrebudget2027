@@ -1,350 +1,201 @@
 #!/usr/bin/env python3
-"""Validation bout-en-bout du dashboard PLF 2027 (build dist/).
+"""Validation indépendante CSV + navigateur Chromium/CDP du build dist/.
 
-Partie A : calcule les valeurs attendues depuis data/staging/fact_credits.csv
-           (agrégation indépendante de DuckDB/SQL).
-Partie B : lance chromium headless contre dist/, pilote l'UI via CDP
-           (KPI, bascule CP/AE, recherche, tri, drill-down, retour) et
-           compare aux valeurs attendues.
-Partie C : contrôles d'intégrité des données (avertissements documentés).
-
-Usage: python3 scripts/validate_headless.py [--port 8901]
-Exit code: 0 si tout passe, 1 sinon.
+Usage : python3 scripts/validate_headless.py [--port 8901]
+Dépendances Python : websocket-client. Le build doit être préparé auparavant.
 """
-
 import argparse
 import collections
 import csv
 import json
-import re
+import shutil
+import socket
 import subprocess
-import sys
 import time
 import urllib.request
+from pathlib import Path
 
-REPO = subprocess.run(
-    ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True
-).stdout.strip() or "."
-
+ROOT = Path(__file__).resolve().parents[1]
 FAILURES = []
+COUNT = 0
 
 
-def check(label, ok, detail=""):
-    status = "PASS" if ok else "FAIL"
-    print(f"  [{status}] {label}" + (f" — {detail}" if detail else ""))
+def check(label, ok, detail=''):
+    global COUNT
+    COUNT += 1
+    print(f"  [{'PASS' if ok else 'FAIL'}] {label}" + (f' — {detail}' if detail else ''))
     if not ok:
         FAILURES.append(label)
 
 
-def warn(label, detail=""):
-    print(f"  [WARN] {label}" + (f" — {detail}" if detail else ""))
-
-
-# ---------------------------------------------------------------- Partie A
-def expected_from_csv(path):
-    rows = list(csv.DictReader(open(path, encoding="utf-8")))
-    progs = [r for r in rows if r["programme"] != "(total mission)"]
-    exp = {}
-    for ct in ("CP", "AE"):
-        m = collections.defaultdict(lambda: [0, 0])
-        for r in progs:
-            if r["type_credit"] != ct:
-                continue
-            m[r["mission"]][int(r["annee"]) - 2026] += int(r["montant"])
-        t26 = sum(v[0] for v in m.values())
-        t27 = sum(v[1] for v in m.values())
-        top = max(m.items(), key=lambda kv: kv[1][1])
-        mini = min(m.items(), key=lambda kv: kv[1][1])
-        exp[ct] = {
-            "t26": t26, "t27": t27,
-            "n": len(m),
-            "top_name": top[0], "top26": top[1][0], "top27": top[1][1],
-            "min_name": mini[0],
+def expected_from_csv():
+    with (ROOT / 'data/staging/fact_credits.csv').open(encoding='utf-8') as f:
+        rows = list(csv.DictReader(f))
+    expected = {}
+    for ct in ('CP', 'AE'):
+        missions = collections.defaultdict(lambda: [0, 0])
+        for r in rows:
+            if r['type_credit'] == ct and r['programme'] == '(total mission)':
+                missions[r['mission']][int(r['annee']) - 2026] += int(r['montant'])
+        expected[ct] = {
+            'missions': missions,
+            't26': sum(v[0] for v in missions.values()),
+            't27': sum(v[1] for v in missions.values()),
+            'top': max(missions, key=lambda n: missions[n][1]),
+            'min': min(missions, key=lambda n: missions[n][1]),
         }
-    # programmes de la mission top (CP)
-    top = exp["CP"]["top_name"]
-    exp["top_programs"] = sorted({r["programme"] for r in progs
-                                  if r["mission"] == top})
-    # mission Défense
-    defn = [r for r in progs if r["mission"] == "Défense"]
-    d = collections.defaultdict(int)
-    for r in defn:
-        d[(r["type_credit"], int(r["annee"]))] += int(r["montant"])
-    exp["defense"] = dict(d)
-    exp["rows"] = rows
-    return exp
+    keys = [(r['scope'], r['mission'], r['programme'], r['type_credit'], r['annee']) for r in rows]
+    check('pas de doublons de faits', len(keys) == len(set(keys)))
+    check('32 missions CP et AE', all(len(expected[ct]['missions']) == 32 for ct in expected))
+    check('contrat numérique et unité', all(r['montant'].isdigit() and r['unite'] == 'EUR' for r in rows))
+    check('copies servies synchronisées', all((ROOT / 'data/staging' / n).read_bytes() == (ROOT / 'sqlrooms-dashboard/dist/data' / n).read_bytes() for n in ('fact_credits.csv', 'dim_contexte.csv', 'fact_mesures_plfss.csv')))
+    return expected
 
 
-def fmt_mde(n):
-    """Format UI fmtEUR pour >= 1e9 : X,X Md€ (fr, 1 décimale max)."""
-    v = n / 1e9
-    s = f"{v:.1f}".replace(".", ",")
-    return s.rstrip("0").rstrip(",") if s.endswith(",0") else s
+def fmt(n):
+    s = f'{n / 1e9:.1f}'.replace('.', ',')
+    return (s[:-2] if s.endswith(',0') else s) + ' Md€'
 
 
-def fmt_pct(p):
-    s = f"{abs(p):.1f}".replace(".", ",")
-    return ("+" if p > 0 else "−" if p < 0 else "") + s + " %"
+class Browser:
+    def __init__(self, port):
+        executable = shutil.which('chromium-browser') or shutil.which('chromium')
+        if not executable:
+            raise RuntimeError('Chromium introuvable')
+        import tempfile
+        self.profile = tempfile.TemporaryDirectory(prefix='budget-chromium-')
+        with socket.socket() as sock:
+            sock.bind(('127.0.0.1', 0))
+            debug_port = sock.getsockname()[1]
+        self.proc = subprocess.Popen([executable, '--headless', '--no-sandbox', '--disable-gpu',
+                                     '--remote-allow-origins=*', f'--user-data-dir={self.profile.name}',
+                                     f'--remote-debugging-port={debug_port}', f'http://localhost:{port}/'],
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.ws = None
+        self.id = 0
+        for _ in range(100):
+            try:
+                targets = json.load(urllib.request.urlopen(f'http://localhost:{debug_port}/json', timeout=1))
+                page = next(t for t in targets if t['type'] == 'page')
+                import websocket
+                self.ws = websocket.create_connection(page['webSocketDebuggerUrl'], timeout=20)
+                break
+            except Exception:
+                time.sleep(.1)
+        if not self.ws:
+            self.close()
+            raise RuntimeError('Chromium CDP inaccessible')
+
+    def command(self, method, params=None):
+        self.id += 1
+        self.ws.send(json.dumps({'id': self.id, 'method': method, 'params': params or {}}))
+        while True:
+            response = json.loads(self.ws.recv())
+            if response.get('id') == self.id:
+                if 'error' in response:
+                    raise RuntimeError(response['error'])
+                return response.get('result', {})
+
+    def js(self, expression):
+        result = self.command('Runtime.evaluate', {'expression': expression, 'returnByValue': True, 'awaitPromise': True})
+        if 'exceptionDetails' in result:
+            raise RuntimeError(result['exceptionDetails'])
+        return result.get('result', {}).get('value')
+
+    def wait(self, expression, timeout=30):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            result = self.js(expression)
+            if result:
+                return result
+            time.sleep(.1)
+        raise RuntimeError(f'Délai dépassé : {expression}')
+
+    def click(self, selector):
+        if not self.js(f"(() => {{ const e = document.querySelector({json.dumps(selector)}); if (!e) return false; e.click(); return true; }})()"):
+            raise RuntimeError(f'Élément absent : {selector}')
+        time.sleep(.15)
+
+    def type(self, text):
+        self.js(f"(() => {{ const e = document.querySelector('.search-input input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(e, {json.dumps(text)}); e.dispatchEvent(new Event('input', {{bubbles: true}})); }})()")
+        time.sleep(.15)
+
+    def key(self, key, code=None, **extra):
+        params = {'key': key, 'code': code or key, **extra}
+        self.command('Input.dispatchKeyEvent', {'type': 'keyDown', **params})
+        self.command('Input.dispatchKeyEvent', {'type': 'keyUp', **params})
+        time.sleep(.15)
+
+    def close(self):
+        if self.ws:
+            self.ws.close()
+        self.proc.terminate()
+        try:
+            self.proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
+            self.proc.wait()
+        self.profile.cleanup()
 
 
-# ---------------------------------------------------------------- Partie B
-def run_ui_checks(port, exp):
-    proc = subprocess.Popen(
-        ["chromium-browser", "--headless", "--no-sandbox", "--disable-gpu",
-         "--remote-allow-origins=*", f"--remote-debugging-port={port + 100}",
-         f"http://localhost:{port}/"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(2)
-    try:
-        targets = json.load(urllib.request.urlopen(
-            f"http://localhost:{port + 100}/json"))
-        page = next(t for t in targets if t["type"] == "page")
-        import websocket
-        ws = websocket.create_connection(
-            page["webSocketDebuggerUrl"], timeout=15)
-    except Exception as e:
-        check("chromium CDP accessible", False, str(e))
-        proc.terminate()
-        return
-
-    _id = [0]
-
-    def eval_js(expr, wait_for_value=True, tries=40, delay=1.0):
-        """Évalue une expression JS; si wait_for_value, retente tant que
-        le résultat est vide (chargement WASM / re-render React)."""
-        for _ in range(tries if wait_for_value else 1):
-            _id[0] += 1
-            myid = _id[0]
-            ws.send(json.dumps({"id": myid, "method": "Runtime.evaluate",
-                                "params": {"expression": expr,
-                                           "returnByValue": True}}))
-            deadline = time.time() + 10
-            while time.time() < deadline:
-                r = json.loads(ws.recv())
-                if r.get("id") == myid:
-                    v = r.get("result", {}).get("result", {}).get("value")
-                    if v or not wait_for_value:
-                        return v
-                    break
-            time.sleep(delay)
-        return None
-
-    def type_text(sel, text):
-        return eval_js(
-            f"(() => {{ const i = document.querySelector('{sel}');"
-            f" const s = Object.getOwnPropertyDescriptor("
-            f"HTMLInputElement.prototype, 'value').set;"
-            f" s.call(i, {json.dumps(text)});"
-            f" i.dispatchEvent(new Event('input', {{bubbles: true}}));"
-            f" return true; }})()", wait_for_value=False)
-
-    def click_first(sel):
-        return eval_js(
-            f"(() => {{ const e = document.querySelector('{sel}');"
-            f" if (!e) return null; e.dispatchEvent("
-            f"new MouseEvent('click', {{bubbles: true}})); return true; }})()",
-            wait_for_value=False)
-
-    # -- 1. chargement
-    check("pas d'écran d'erreur",
-          not eval_js("document.body.innerText.includes('Erreur au lancement')"))
-    kpi = eval_js("document.querySelector('.kpis')?.innerText") or ""
-    check("KPI affichés", bool(kpi))
-
-    cp = exp["CP"]
-    check("KPI total CP 2027", fmt_mde(cp["t27"]) + " Md€" in kpi,
-          f"attendu {fmt_mde(cp['t27'])} Md€")
-    check("KPI LFI 2026", fmt_mde(cp["t26"]) + " Md€" in kpi,
-          f"attendu {fmt_mde(cp['t26'])} Md€")
-    delta = cp["t27"] - cp["t26"]
-    check("KPI delta", fmt_mde(abs(delta)) + " Md€" in kpi)
-    evol = (cp["t27"] - cp["t26"]) / cp["t26"] * 100
-    check("KPI évolution %", fmt_pct(evol) in kpi.replace("−", "−"),
-          f"attendu {fmt_pct(evol)}")
-    check("KPI top poste", cp["top_name"] in kpi, cp["top_name"])
-
-    # -- 2. treemap & barres & tableau
-    check("treemap : une cellule par mission",
-          eval_js("document.querySelectorAll('.tm-cell').length") == cp["n"],
-          f"{eval_js('document.querySelectorAll(\".tm-cell\").length')} / {cp['n']}")
-    check("barres : top 14 × 2 séries",
-          eval_js("document.querySelectorAll('.recharts-bar-rectangle').length")
-          == 28)
-    n_rows = eval_js("document.querySelector('table.tbl')?.querySelectorAll('tbody tr').length")
-    check("tableau : missions + ligne total",
-          n_rows == cp["n"] + 1, f"{n_rows} / {cp['n'] + 1}")
-    first_row = eval_js(
-        "document.querySelector('table.tbl tbody tr')?.innerText") or ""
-    check("1ʳᵉ ligne = mission top", cp["top_name"] in first_row)
-    check("1ʳᵉ ligne : PLF 2027 correct",
-          fmt_mde(cp["top27"]) + " Md€" in first_row,
-          f"attendu {fmt_mde(cp['top27'])} Md€")
-    check("note de lecture « 54 Md€ » présente",
-          bool(eval_js("document.querySelector('.note')?.innerText.includes('54 Md€')")))
-    ctx_txt = eval_js("document.querySelector('.ctx-grid')?.innerText") or ""
-    check("cartes contexte : 54 Md€ d'efforts visibles", "54 Md€" in ctx_txt)
-    n_ctx = eval_js("document.querySelectorAll('.ctx-card').length")
-    check("cartes contexte : 6 chiffres du rapport général", n_ctx == 6,
-          f"{n_ctx} / 6")
-    check("cartes contexte : périmètre et sources affichés",
-          "source p. 12" in ctx_txt and "Administrations publiques" in ctx_txt)
-
-    # -- Mesures PLFSS (ADR-004)
-    mes_head = (eval_js("[...document.querySelectorAll('.section-title')].map(e => e.innerText).join(' | ')")
-                or "").upper()
-    check("section « 43 Md€ côté sécurité sociale — PLFSS 2027 » présente",
-          "43 MD€ CÔTÉ SÉCURITÉ SOCIALE" in mes_head and "PLFSS 2027" in mes_head)
-    mes_txt = eval_js("document.body.innerText") or ""
-    check("mesures PLFSS : ONDAM 278,7 Md€ affiché", "278,7 Md€" in mes_txt)
-    check("mesures PLFSS : économies ONDAM 5,1 Md€ affichées", "5,1 Md€" in mes_txt)
-    check("mesures PLFSS : solde ROBSS −12,7 Md€ affiché", "−12,7 Md€" in mes_txt)
-    check("mesures PLFSS : réserve « ne pas additionner » affichée",
-          "ne pas additionner" in mes_txt.lower())
-    check("mesures PLFSS : réserve ventilation non publiée affichée",
-          "non publiée" in mes_txt.lower())
-    n_mes = eval_js(
-        "[...document.querySelectorAll('table.tbl')].map(t => t.querySelectorAll('tbody tr').length).join(',')"
-    ) or ""
-    check("mesures PLFSS : 17 lignes de mesures", n_mes.split(",")[-1] == "17",
-          f"{n_mes}")
-
-    # -- 3. tri du tableau (PLF 2027 = 3ᵈ colonne : Mission | LFI 2026 | PLF 2027 | Évolution | Part)
-    click_first("table.tbl th:nth-child(3)")  # PLF 2027 -> bascule asc
-    time.sleep(0.4)
-    first_asc = eval_js(
-        "document.querySelector('table.tbl tbody tr')?.innerText") or ""
-    check("tri ascendant : 1ʳᵉ ligne = plus petite mission",
-          exp["CP"]["min_name"] in first_asc, exp["CP"]["min_name"])
-    click_first("table.tbl th:nth-child(3)")  # retour desc
-    time.sleep(0.4)
-
-    # -- 4. bascule AE
-    click_first(".seg button:nth-child(2)")
-    ae = exp["AE"]
-    kpi_ae = eval_js("document.querySelector('.kpis')?.innerText",
-                     tries=20) or ""
-    check("bascule AE : total AE 2027",
-          fmt_mde(ae["t27"]) + " Md€" in kpi_ae,
-          f"attendu {fmt_mde(ae['t27'])} Md€")
-    check("bascule AE : LFI 2026",
-          fmt_mde(ae["t26"]) + " Md€" in kpi_ae)
-    hint = (eval_js("[...document.querySelectorAll('.hint')].map(e => e.innerText).join(' | ')")
-            or "")
-    check("hint barres suit la bascule", "AE 2027" in hint, hint[:80])
-    click_first(".seg button:nth-child(1)")  # retour CP
-    eval_js("document.querySelector('.kpis')?.innerText", tries=20)
-
-    # -- 5. recherche
-    type_text(".search-input input", "Défense")
-    time.sleep(0.5)
-    n_rows = eval_js("document.querySelector('table.tbl')?.querySelectorAll('tbody tr').length",
-                     tries=20)
-    check("recherche « Défense » : 1 mission + total", n_rows == 2,
-          f"{n_rows} lignes")
-    d27 = exp["defense"][("CP", 2027)]
-    check("KPI filtrés = Défense CP 2027",
-          fmt_mde(d27) + " Md€" in (eval_js("document.querySelector('.kpis')?.innerText") or ""),
-          f"attendu {fmt_mde(d27)} Md€")
-    type_text(".search-input input", "zzzz-aucune")
-    time.sleep(0.5)
-    check("recherche sans résultat : message vide",
-          bool(eval_js("document.querySelector('.empty')?.innerText.includes('Aucune mission')",
-                       tries=10)))
-    type_text(".search-input input", "")
-    time.sleep(0.5)
-    eval_js("document.querySelector('.kpis')?.innerText", tries=20)
-
-    # -- 6. drill-down via clic treemap
-    click_first(".tm-cell")
-    time.sleep(0.8)
-    body = eval_js("document.body.innerText", tries=20) or ""
-    check("clic treemap : vue programmes",
-          "Programmes —" in body and "Remboursements" in body)
-    check("chip mission sélectionnée affichée",
-          "Remboursements" in (eval_js("document.querySelector('.chip')?.innerText") or ""))
-    check("vue programmes : nom de la mission dans le titre",
-          f"Programmes — {exp['CP']['top_name']}"[:40] in body)
-    check("clic treemap : section PLFSS masquée en vue programmes",
-          "278,7 Md€" not in (eval_js("document.body.innerText") or ""))
-    n_prog = eval_js("document.querySelectorAll('table.tbl tbody tr').length")
-    check("nombre de programmes de la mission top",
-          n_prog == len(exp["top_programs"]),
-          f"{n_prog} / {len(exp['top_programs'])}")
-    # -- 7. retour
-    click_first(".back-btn")
-    time.sleep(0.6)
-    n_rows = eval_js("document.querySelector('table.tbl')?.querySelectorAll('tbody tr').length",
-                     tries=20)
-    check("retour : missions + total", n_rows == cp["n"] + 1, f"{n_rows} lignes")
-    # -- 8. drill-down via clic ligne tableau (une autre mission)
-    click_first("table.tbl tbody tr:nth-child(2)")
-    time.sleep(0.8)
-    check("clic ligne : vue programmes",
-          "Programmes —" in (eval_js("document.body.innerText", tries=20) or ""))
-    click_first(".back-btn")
-    time.sleep(0.6)
-
-    ws.close()
-    proc.terminate()
-
-
-# ---------------------------------------------------------------- Partie C
-def data_integrity_checks(rows):
-    by_m = collections.defaultdict(int)
-    by_p = collections.defaultdict(int)
-    for r in rows:
-        k = r["mission"]
-        if r["programme"] == "(total mission)":
-            by_m[k] += int(r["montant"])
-        else:
-            by_p[k] += int(r["montant"])
-    frags = [k for k in by_p if k not in by_m]
-    warn("3 noms de missions tronqués (continuations multi-lignes)", "")
-    for f in frags:
-        warn(f"fragment «{f}»", "programmes attribués au nom tronqué")
-    lone = [k for k in by_m if k not in by_p]
-    for l in lone:
-        warn(f"mission «{l}» : ligne total sans programme",
-             "absente du dashboard")
-    gap = sum(by_m.get(k, 0) - by_p.get(k, 0) for k in set(by_m) | set(by_p)
-              if by_m.get(k, 0) != by_p.get(k, 0) and k not in frags and k not in lone)
-    warn("lignes programmes manquantes vs totaux du PDF",
-         f"≈ {gap / 1e9:.1f} Md€ sur ~1 250 Md€ de lignes")
+def run_ui_checks(browser, exp):
+    b = browser
+    b.wait("!!document.querySelector('.kpis')")
+    check('pas d’écran d’erreur', not b.js("document.body.innerText.includes('Erreur au lancement')"))
+    check('titre citoyen', b.js("document.querySelector('h1').innerText.includes('Où va l’argent')"))
+    check('avertissement crédits non exécutés', b.js("document.body.innerText.includes('Ils ne représentent pas encore les dépenses effectivement réalisées.')"))
+    check('données fictives annoncées', b.js("document.body.innerText.includes('fictif / simulé')"))
+    for ct in ('CP', 'AE'):
+        b.click(f'.seg button:nth-child({1 if ct == "CP" else 2})')
+        b.wait(f"document.querySelector('.kpis')?.innerText.includes('{fmt(exp[ct]['t27'])}')")
+        text = b.js("document.querySelector('.kpis').innerText")
+        check(f'KPI {ct} 2027 = totaux imprimés', fmt(exp[ct]['t27']) in text)
+        check(f'KPI {ct} 2026', fmt(exp[ct]['t26']) in text)
+        check(f'KPI {ct} évolution', fmt(abs(exp[ct]['t27'] - exp[ct]['t26'])) in text)
+        check(f'32 barres de classement {ct}', b.js("document.querySelectorAll('.horizontal-ranking li').length") == 32)
+    b.click('.seg button:first-child')
+    b.wait(f"document.querySelector('.kpis')?.innerText.includes('{fmt(exp['CP']['t27'])}')")
+    check('cinq postes principaux', b.js("document.querySelectorAll('.top5 button').length") == 5)
+    check('classement top = plus grande mission', exp['CP']['top'] in b.js("document.querySelector('.horizontal-ranking li').innerText"))
+    check('pour 100 € avec périmètre', b.js("document.querySelector('.hundred').innerText.includes('Autres missions')"))
+    check('graphiques secondaires masqués par défaut', b.js("document.querySelectorAll('.tm-cell').length") == 0)
+    check('table accessible : 32 missions', b.js("document.querySelector('table.tbl tbody').rows.length") == 32)
+    check('total en pied de tableau', b.js("document.querySelector('table.tbl tfoot').innerText.toLowerCase().includes('32 missions')"))
+    b.click('table.tbl thead th:nth-child(3) button')
+    check('tri ascendant', exp['CP']['min'] in b.js("document.querySelector('table.tbl tbody tr').innerText"))
+    check('aria-sort ascendant', b.js("document.querySelector('table.tbl thead th:nth-child(3)').getAttribute('aria-sort')") == 'ascending')
+    b.click('table.tbl thead th:nth-child(3) button')
+    b.type('Défense')
+    check('recherche Défense = une mission', b.js("document.querySelector('table.tbl tbody').rows.length") == 1)
+    check('KPI filtrés Défense', fmt(exp['CP']['missions']['Défense'][1]) in b.js("document.querySelector('.kpis').innerText"))
+    b.type('zzzz-aucune')
+    check('recherche vide', b.js("document.querySelector('.empty')?.innerText.includes('Aucune mission')"))
+    b.click('.reset-btn')
+    check('réinitialisation', b.js("document.querySelector('table.tbl tbody').rows.length") == 32)
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--port", type=int, default=8901)
+    ap.add_argument('--port', type=int, default=8901)
     args = ap.parse_args()
-
-    print("== Partie A : valeurs attendues (agrégation Python indépendante) ==")
-    exp = expected_from_csv(f"{REPO}/data/staging/fact_credits.csv")
-    for ct in ("CP", "AE"):
-        e = exp[ct]
-        print(f"  {ct}: {e['n']} missions | 2026={e['t26']/1e9:.1f} Md€ | "
-              f"2027={e['t27']/1e9:.1f} Md€ | top={e['top_name']} "
-              f"({e['top27']/1e9:.1f} Md€)")
-
-    print("\n== Partie C : intégrité des données (avertissements) ==")
-    data_integrity_checks(exp["rows"])
-
-    print(f"\n== Partie B : UI headless (http://localhost:{args.port}) ==")
-    server = subprocess.Popen(
-        ["python3", "-m", "http.server", str(args.port),
-         "--directory", f"{REPO}/sqlrooms-dashboard/dist"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(1.5)
+    with socket.socket() as sock:
+        sock.bind(('127.0.0.1', args.port))  # échoue plutôt que tester un serveur préexistant
+    server = subprocess.Popen(['python3', '-m', 'http.server', str(args.port), '--directory', str(ROOT / 'sqlrooms-dashboard/dist')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    browser = None
     try:
-        run_ui_checks(args.port, exp)
+        exp = expected_from_csv()
+        browser = Browser(args.port)
+        run_ui_checks(browser, exp)
+    except Exception as e:
+        check('exécution des tests', False, str(e))
     finally:
+        if browser:
+            browser.close()
         server.terminate()
-
-    print(f"\n== RÉSULTAT : {'ÉCHEC' if FAILURES else 'SUCCÈS'} "
-          f"({len(FAILURES)} échec(s)) ==")
-    for f in FAILURES:
-        print(f"  ✗ {f}")
-    sys.exit(1 if FAILURES else 0)
+        server.wait()
+    print(f'\nRésultat : {COUNT - len(FAILURES)}/{COUNT} PASS')
+    raise SystemExit(1 if FAILURES else 0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
