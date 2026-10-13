@@ -17,6 +17,28 @@ export interface MissionRow {
   y2027: number;
 }
 
+/** Ligne de data/staging/dim_contexte.csv — chiffres éditoriaux du rapport général (ADR-003). */
+export interface ContextRow {
+  cle: string;
+  libelle: string;
+  valeur: number;
+  unite: string;
+  annee: number;
+  perimetre: string;
+  source_page: number;
+  note: string;
+}
+
+/** Ordre d’affichage des cartes « chiffres du rapport général ». */
+const CTX_KEYS = [
+  'total_efforts',
+  'mesures_2027',
+  'montee_en_charge',
+  'depense_sous_norme',
+  'deficit_public',
+  'dette_publique',
+] as const;
+
 export default function Dashboard() {
   const [rows, setRows] = useState<MissionRow[]>([]);
   const [programs, setPrograms] = useState<MissionRow[]>([]);
@@ -24,6 +46,7 @@ export default function Dashboard() {
   const [creditType, setCreditType] = useState<'CP' | 'AE'>('CP');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [ctx, setCtx] = useState<Record<string, ContextRow>>({});
 
   const loadMissions = useCallback(async (ct: 'CP' | 'AE') => {
     setLoading(true);
@@ -56,6 +79,16 @@ export default function Dashboard() {
   useEffect(() => {
     loadMissions(creditType);
   }, [loadMissions, creditType]);
+
+  // Chiffres de contexte (rapport général) — indépendants du type de crédit.
+  useEffect(() => {
+    (async () => {
+      const r = await query<ContextRow>(
+        'SELECT cle, libelle, valeur, unite, annee, perimetre, source_page, note FROM dim_contexte'
+      );
+      setCtx(Object.fromEntries(r.map((row) => [row.cle, row])));
+    })();
+  }, []);
 
   useEffect(() => {
     if (selected) loadPrograms(selected, creditType);
@@ -207,6 +240,29 @@ export default function Dashboard() {
         par rapport à la LFI 2026.
       </div>
 
+      {/* ---- Chiffres du rapport général (périmètre élargi — cf. dim_contexte.csv, ADR-003) ---- */}
+      <div className="section-title">
+        Les chiffres du rapport général — le décor de ces crédits
+      </div>
+      <section className="ctx-grid">
+        {CTX_KEYS.filter((k) => ctx[k]).map((k) => {
+          const c = ctx[k];
+          const v = c.valeur.toLocaleString('fr-FR', { maximumFractionDigits: 1 }).replace('-', '−');
+          return (
+            <div className="ctx-card" key={k} title={c.note}>
+              <div className="ctx-val">
+                {v} <span className="ctx-unit">{c.unite}</span>
+              </div>
+              <div className="ctx-lib">{c.libelle}</div>
+              <div className="sub">
+                {c.perimetre} · {c.annee} · source p. {c.source_page}
+                {c.note ? <em> — {c.note}</em> : null}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
       {/* ---- Top 5 ---- */}
       <div className="section-title">Les 5 premiers postes de dépenses</div>
       <section className="top5">
@@ -303,7 +359,9 @@ export default function Dashboard() {
         Source : Projet de loi de finances pour 2027, tome 1 — récapitulatif général des crédits
         (missions et programmes). Montants en euros. Extraction automatique du PDF officiel ;
         quelques libellés peuvent être tronqués. AE = autorisations d’engagement,
-        CP = crédits de paiement.
+        CP = crédits de paiement. Cartes « chiffres du rapport général » : chiffres
+        éditoriaux du tome 1 (p. 11-13), périmètre des administrations publiques
+        incluant la sécurité sociale — distinct du périmètre des crédits ci-dessus.
       </footer>
     </div>
   );

@@ -44,6 +44,18 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
   );
   console.log('[DUCKDB] Table created');
 
+  // Contexte éditorial : chiffres du rapport général (cf. ADR-003)
+  console.log('[DUCKDB] Fetching context CSV...');
+  const ctxText = await fetch('/data/dim_contexte.csv').then((r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/dim_contexte.csv`);
+    return r.text();
+  });
+  await db.registerFileText('dim_contexte.csv', ctxText);
+  await c.query(
+    `CREATE OR REPLACE TABLE dim_contexte AS FROM read_csv_auto('dim_contexte.csv')`
+  );
+  console.log('[DUCKDB] Context table created');
+
   await c.query(`
     CREATE OR REPLACE VIEW v_missions_cp_2027 AS
     SELECT mission, SUM(montant) as total

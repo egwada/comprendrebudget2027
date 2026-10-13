@@ -181,6 +181,13 @@ def run_ui_checks(port, exp):
           f"attendu {fmt_mde(cp['top27'])} Md€")
     check("note de lecture « 54 Md€ » présente",
           bool(eval_js("document.querySelector('.note')?.innerText.includes('54 Md€')")))
+    ctx_txt = eval_js("document.querySelector('.ctx-grid')?.innerText") or ""
+    check("cartes contexte : 54 Md€ d'efforts visibles", "54 Md€" in ctx_txt)
+    n_ctx = eval_js("document.querySelectorAll('.ctx-card').length")
+    check("cartes contexte : 6 chiffres du rapport général", n_ctx == 6,
+          f"{n_ctx} / 6")
+    check("cartes contexte : périmètre et sources affichés",
+          "source p. 12" in ctx_txt and "Administrations publiques" in ctx_txt)
 
     # -- 3. tri du tableau (PLF 2027 = 3ᵈ colonne : Mission | LFI 2026 | PLF 2027 | Événement | Part)
     click_first("table.tbl th:nth-child(3)")  # PLF 2027 -> bascule asc
