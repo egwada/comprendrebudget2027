@@ -24,12 +24,12 @@ La **méthode et les sources** restent accessibles depuis la navigation (ou un l
 
 Limiter l’accueil à 3–5 repères regroupés par nature et période, par exemple :
 
-- **Projet simulé 2027** : total CP et évolution par rapport à la LFI 2026 → onglet « Budget de l’État ».
+- **Projet de budget 2027** : total CP et évolution par rapport à la LFI 2026 → onglet « Budget de l’État ».
 - **Exécution observée** : dernier solde exécuté du budget général disponible → « Solde et dette ».
 - **Dette observée** : intérêts et principal remboursé, en indiquant clairement l’année et le périmètre de chaque chiffre → « Solde et dette ».
 - Un repère 43/54 Md€ ou PLFSS, seulement si l’accueil ne devient pas trop chargé → « Mesures et contexte ».
 
-Ne pas juxtaposer prévisions du PLF simulé et exécutions historiques comme s’il s’agissait d’une série homogène. Chaque carte indique son année, son périmètre, son statut (prévu/exécuté) et sa source. Conserver l’avertissement sur le caractère simulé du PLF 2027.
+Ne pas juxtaposer les prévisions du PLF et les exécutions historiques comme s’il s’agissait d’une série homogène. Chaque carte indique son année, son périmètre, son statut (prévu/exécuté) et sa source.
 
 ## Comportement de navigation
 

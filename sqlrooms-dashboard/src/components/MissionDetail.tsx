@@ -3,7 +3,7 @@ import RankingTable from './RankingTable';
 import { evolutionLabel, fmtEUR } from '../lib/format';
 import { exportCredits } from '../lib/csv';
 import { sectionLabels } from '../lib/labels';
-import { publicUrl } from '../lib/publicUrl';
+import { plfPageUrl } from '../lib/sourceLinks';
 
 export interface QualityRow {
   mission: string;
@@ -79,12 +79,12 @@ export default function MissionDetail({
         </div>
       </dl>
       <p>
-        Ces montants sont repris du document de démonstration, pages indiquées ci-dessous. Ils
+        Ces montants sont repris du projet de loi de finances 2027, aux pages indiquées ci-dessous. Ils
         décrivent des crédits prévus, pas des dépenses déjà réalisées.{' '}
         {mission.source_pages?.split(', ').map((p, i) => (
           <span key={p}>
             {i > 0 ? ', ' : ''}
-            <a href={publicUrl(`sources/l17b3210_projet-loi.pdf#page=${p}`)} target="_blank" rel="noreferrer">
+            <a href={plfPageUrl(p)} target="_blank" rel="noreferrer">
               PDF p. {p} (nouvel onglet)
             </a>
           </span>

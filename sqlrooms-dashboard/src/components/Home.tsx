@@ -71,7 +71,7 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
             sub: `Évolution vs 2026 : ${evolutionLabel(cpRow.y2026, cpRow.y2027)}`,
             year: '2027',
             perimeter: 'Budget général de l’État',
-            status: 'prévision (simulée)',
+            status: 'prévision (projet de loi)',
             source: 'Assemblée nationale · PLF 2027, pp. 307–313',
             target: 'budget',
           },

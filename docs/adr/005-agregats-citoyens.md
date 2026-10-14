@@ -16,4 +16,4 @@ L’extraction utilise les positions des quatre en-têtes sur chaque page. Les c
 
 La vue citoyenne présente les CP par défaut, un classement horizontal et une table accessible. Le treemap est secondaire. Les crédits sont bruts : les remboursements et dégrèvements constituent le premier poste et ne sont pas un financement de services publics. Les parts et la lecture pour 100 € utilisent explicitement ce même dénominateur, filtré si une recherche est active.
 
-Le PDF PLF 2027 est fictif / simulé (ADR-001). L’interface doit annoncer cette limite avant toute publication ; ne pas le présenter comme un document officiel réel.
+Le PLF 2027 est un projet présenté au Parlement : les montants sont des prévisions et non des dépenses exécutées. L’interface doit distinguer clairement ces crédits prévus des séries historiques d’exécution et citer la publication de l’Assemblée nationale.

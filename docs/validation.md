@@ -1,6 +1,6 @@
 # Validation — tableau de bord budgétaire citoyen
 
-**Résultat : 113/113 contrôles headless PASS, 11/11 tests de données PASS, 7/7 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
+**Résultat : 114/114 contrôles headless PASS, 11/11 tests de données PASS, 7/7 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
 
 Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vue initiale. Les défauts d’extraction signalés à l’époque sont corrigés, et les KPI utilisent désormais les totaux mission imprimés, pas la somme des programmes extraits.
 
@@ -47,7 +47,7 @@ Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.1
 
 | Domaine | Contrôles validés |
 |---|---|
-| Entrée | Titre citoyen, avertissement prévision/exécution, caractère simulé annoncé |
+| Entrée | Titre citoyen, source officielle PLF citée, distinction crédits prévus/dépenses exécutées |
 | Accueil | Cinq agrégats sourcés et un treemap hiérarchique : 32 missions, programmes en nuances, tableau alternatif de 135 lignes ; note ECU/EUR en bas de page |
 | Budget | CP/AE 2026/2027, delta, 32 missions, classement, calcul pour 100 €, recherche, réinitialisation et graphiques masqués par défaut |
 | Tableaux | 32 lignes missions, total en pied, tri asc/desc et `aria-sort`, tri Entrée/Espace ; mise en évidence bleue neutre et appel au clic pour le poste dette |
@@ -58,7 +58,7 @@ Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.1
 | Contexte | 43/54 Md€ distincts, année/unité/périmètre/source et réserves de non-additivité |
 | Solde et dette | Solde APU AMECO 1974–2024 avec ligne zéro ; solde exécuté du budget général INSEE 2009–2025 ; intérêts APU à partir de 1978 ; encours à partir de 1977 affiché en Md ECU/EUR et en % du PIB sur deux graphiques côte à côte, utilisant la largeur disponible ; amortissements MLT État 2019–2024 et intérêts/charge 2023–2024 ; exports sourcés, périmètres explicités |
 | PLFSS | 17 mesures, 278,7 / 5,1 / −12,7 Md€, réserves non-additivité et ventilation non publiée |
-| Sources | Trois PDF réellement servis avec type MIME PDF ; sources AMECO, INSEE et AFT liées aux séries historiques |
+| Sources | Liens PLF/PLFSS vers les éditeurs officiels ; rapport AFT servi localement ; sources AMECO et INSEE citées |
 | Accessibilité | Neuf audits axe-core sans violation détectée (quatre vues, fiche, expert, Accueil mobile, Budget mobile, méthodologie), tabulation, focus visible, mobile 375 px sans débordement, zoom CSS émulé à 200 %, reduced-motion |
 | Robustesse | Absence de doublons, synchronisation des CSV, écart injecté visible sans changement des KPI, restauration du build |
 
@@ -80,8 +80,7 @@ Cour   d2bc38c6b6977a10ce4d4d2690489b101ec54952409265cd9848ae09ab100ada
 
 ## Réserves et travaux externes
 
-- **Le PLF est fictif / simulé** (ADR-001). Aucun budget officiel réel ne peut être déduit de cette démonstration.
-- Les montants du PLF simulé sont des crédits prévus, pas des dépenses exécutées ; euros courants, pas corrigés de l’inflation. Les séries historiques sont distinctes et issues d’AMECO, de l’INSEE et du rapport de la Cour des comptes.
+- Les montants du PLF sont des crédits prévus, pas des dépenses exécutées ; euros courants, pas corrigés de l’inflation. Les séries historiques sont distinctes et issues d’AMECO, de l’INSEE et du rapport de la Cour des comptes.
 - La série longue disponible porte sur le **solde des administrations publiques**, pas sur le seul budget de l’État ; elle ne suffit donc pas à prouver une affirmation sur le périmètre État depuis 1974. L’amortissement de principal documenté ici couvre 2019–2024 ; la source ne fournit intérêts et charge totale que pour 2023–2024.
 - La ventilation exacte PLF/PLFSS des 43 Md€ reste inconnue ; aucun total de mesures recoupées n’est calculé.
 - Axe-core ne contrôle qu’une partie des critères : **aucune certification RGAA/WCAG complète n’est revendiquée**. Audits lecteur d’écran, zoom navigateur natif et mobile réel à réaliser.

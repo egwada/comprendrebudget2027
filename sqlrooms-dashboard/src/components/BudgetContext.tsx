@@ -3,7 +3,7 @@ import { query } from '../duckdb';
 import MesuresPLFSS from './MesuresPLFSS';
 import { downloadCsv } from '../lib/csv';
 import { contextLabels } from '../lib/labels';
-import { publicUrl } from '../lib/publicUrl';
+import { plfPageUrl } from '../lib/sourceLinks';
 
 interface ContextRow {
   cle: string;
@@ -62,7 +62,7 @@ export default function BudgetContext() {
             <p className="sub">
               {r.perimetre} · {r.annee} ·{' '}
               <a
-                href={publicUrl(`sources/l17b3210_projet-loi.pdf#page=${r.source_page}`)}
+                href={plfPageUrl(r.source_page)}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -81,7 +81,7 @@ export default function BudgetContext() {
             'contexte-budget.csv',
             rows.map((r) => ({
               ...r,
-              source_document: 'l17b3210_projet-loi.pdf',
+              source_document: 'l17b3210-projet-loi.pdf',
               qualite_extraction: r.cle === 'montee_en_charge' ? 'derive' : 'curation_sourcee',
             }))
           )

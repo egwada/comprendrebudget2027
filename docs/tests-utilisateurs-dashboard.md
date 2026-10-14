@@ -15,7 +15,7 @@ Les libellés visibles ont été mis en œuvre dans `sqlrooms-dashboard/src/lib/
 
 ## Organisation
 
-Recruter au moins cinq personnes non spécialistes, dont une sur mobile et une utilisant uniquement le clavier si possible. Expliquer que les chiffres sont fictifs / simulés, sans expliquer l’interface à l’avance. Ne collecter aucune donnée personnelle inutile.
+Recruter au moins cinq personnes non spécialistes, dont une sur mobile et une utilisant uniquement le clavier si possible. Expliquer que les montants du PLF sont des prévisions proposées au Parlement et non des dépenses exécutées, sans expliquer l’interface à l’avance. Ne collecter aucune donnée personnelle inutile.
 
 Pour chaque tâche, noter : réponse, durée, chemin suivi, hésitations et besoin d’aide. Objectif produit : les quatre questions de première lecture doivent être résolues en moins d’une minute ; ne pas considérer cet objectif comme atteint sans observation.
 

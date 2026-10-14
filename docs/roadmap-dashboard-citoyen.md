@@ -44,7 +44,7 @@ Le tableau de bord doit rester utile aux journalistes, associations, chercheurs 
 - **corrigé** : libellés multi-lignes complets et cohérents entre missions et programmes ;
 - **corrigé** : Investir 2030, cinq programmes sur les pages 309–310 ;
 - **corrigé** : les 32 totaux mission réconcilient avec les programmes dans les quatre colonnes ; les futurs écarts restent exposés ;
-- **réserve de publication** : le PLF fourni est fictif / simulé (ADR-001), mentionné dans l’interface ;
+- **réserve de lecture** : les crédits du PLF sont des prévisions et ne correspondent pas à des dépenses exécutées ; mentionner le caractère indépendant du tableau de bord ;
 - les chiffres affichés sont des crédits prévus, pas des dépenses exécutées ;
 - les 43/54 Md€ concernent un périmètre plus large que le budget général et ne doivent pas être additionnés aux crédits ;
 - la ventilation exacte PLF / PLFSS des 43 Md€ n'est pas publiée dans les documents actuellement disponibles.

@@ -101,7 +101,7 @@ export default function App() {
         Aller au contenu
       </a>
       <header className="hero">
-        <div className="hero-badge">Prototype · données de démonstration PLF 2027</div>
+        <div className="hero-badge">Prototype indépendant · sources PLF et PLFSS 2027</div>
         <h1>Où va l’argent prévu par l’État en 2027 ?</h1>
         <p className="sub">
           Explorez les crédits, le solde public, la dette et les mesures budgétaires.
@@ -150,10 +150,10 @@ export default function App() {
         )}
       </main>
       <footer className="src">
-        Démonstration non officielle : le document présenté comme le PLF 2027 est fictif / simulé.
-        Ces chiffres ne décrivent pas le budget réel de l’État et ne constituent pas une annonce du
-        gouvernement. Source des crédits affichés : récapitulatif des domaines et programmes,
-        pages 307–313.
+        Prototype indépendant. Les crédits affichés pour 2027 sont des prévisions du projet de loi
+        de finances présenté au Parlement, et non des dépenses exécutées ; ils peuvent évoluer au
+        cours de son examen. Sources des crédits : récapitulatif des domaines et programmes, pages
+        307–313 du PLF 2027.
         <p className="currency-note">
           <b>ECU</b> signifie « unité de compte européenne ». AMECO exprime les années antérieures à
           1999 en ECU, puis les suivantes en euros (EUR) ; lors du passage à l’euro, 1 ECU = 1 EUR.

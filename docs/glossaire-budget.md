@@ -30,4 +30,4 @@
 
 ## Sources et réserve
 
-Définitions adaptées à la lecture des tableaux du PDF PLF 2027 (p. 307–313) et de son rapport général (p. 11–13). Le PLF 2027 local est fictif / simulé (ADR-001) : ce prototype ne présente pas un budget officiel réel.
+Définitions adaptées à la lecture des tableaux du PLF 2027 publiés par l’Assemblée nationale (p. 307–313) et de son rapport général (p. 11–13). Les montants sont des crédits prévus dans un projet de loi, et non des dépenses exécutées.

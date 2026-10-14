@@ -13,8 +13,8 @@ exacte n'est publiée nulle part dans les documents disponibles ; elle sera chif
 parlementaires (dossier AN « PLFSS_2027 », encore vide au 2026-10-14).
 
 Le **texte du PLFSS 2027** (version soumise au Conseil des ministres, NOR CPPX2620963L/Bleue-1,
-121 p. — copie locale `plfss_2027_texte.pdf`) contient en revanche les mesures chiffrées,
-dispersées en prose dans les exposés des motifs et articles (p. 106-121).
+121 p.) contient les mesures chiffrées, dispersées en prose dans les exposés des motifs et articles
+(p. 106–121). La publication officielle utilisée pour les liens est [PLFSS_2027_web.pdf](https://www.budget.gouv.fr/documentation/file-download/33499).
 
 ## Décision
 

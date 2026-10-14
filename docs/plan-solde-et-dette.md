@@ -2,7 +2,7 @@
 
 **Branche** : `feat/deficit-dette-historique`  
 **Statut** : première implémentation terminée ; le périmètre du solde et les années non disponibles restent explicitement limités.
-**Périmètre du prototype actuel** : le PLF 2027 local est simulé. Ses chiffres ne doivent pas être présentés comme des données officielles.
+**Périmètre du prototype actuel** : les chiffres du PLF 2027 sont des crédits prévisionnels. Ils ne doivent pas être présentés comme des dépenses exécutées.
 
 ## Objectif
 
@@ -46,7 +46,7 @@ La série officielle du seul budget de l’État depuis 1974 reste à rechercher
 
 ## Modèle de données envisagé
 
-Ne pas mélanger ces observations avec `fact_credits` (crédits prévus du PLF simulé) ni avec `dim_contexte` (quelques chiffres de contexte).
+Ne pas mélanger ces observations avec `fact_credits` (crédits prévus dans le PLF) ni avec `dim_contexte` (quelques chiffres de contexte).
 
 - `fact_solde_etat` : `annee`, `recettes_eur`, `depenses_eur`, `solde_eur`, `definition_solde`, `statut` (exécuté/prévision), `perimetre`, `source`, `source_page`, `note_qualite`.
 - `fact_financement_dette_etat` : `annee`, `interets_eur`, `principal_amorti_eur`, `emissions_brutes_eur`, `emissions_nettes_eur`, `encours_fin_annee_eur`, ainsi que statut, définition, source, page et notes de qualité. Les valeurs absentes restent manquantes ; ne pas les remplacer par zéro.
@@ -76,4 +76,4 @@ Les colonnes effectivement publiées dépendront des données disponibles et de 
 - L’affirmation sur l’équilibre depuis 1974 n’est affichée que si les sources et la définition du solde la confirment pour toute la période.
 - Chaque chiffre présenté est traçable à une source officielle, une période, une unité, un périmètre et un statut (prévision ou exécution).
 - Intérêts, principal remboursé, émissions et encours restent distingués ; aucune somme ne mélange ces catégories.
-- L’ajout ne modifie pas implicitement le total du budget général et n’attribue aucune authenticité au PLF 2027 simulé.
+- L’ajout ne modifie pas implicitement le total du budget général et conserve la distinction entre crédits prévisionnels du PLF 2027 et exécutions historiques.

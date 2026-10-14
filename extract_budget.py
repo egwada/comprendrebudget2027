@@ -1,4 +1,4 @@
-"""Extraction déterministe du récapitulatif du PDF de démonstration PLF 2027.
+"""Extraction déterministe du récapitulatif du PDF officiel du PLF 2027.
 
 Les colonnes sont localisées par leurs en-têtes, pas par le nombre de montants.
 Une cellule vide vaut zéro dans ce tableau (programme nouveau, ancien ou sans

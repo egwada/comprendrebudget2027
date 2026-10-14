@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { query } from '../duckdb';
 import { downloadCsv } from '../lib/csv';
-import { publicUrl } from '../lib/publicUrl';
+import { plfssPageUrl } from '../lib/sourceLinks';
 
 export interface MesureRow {
   branche: string;
@@ -74,7 +74,7 @@ export default function MesuresPLFSS() {
         Les mesures peuvent se recouper : additionner les lignes donnerait un total trompeur. Les
         montants ne représentent pas tous la même chose : économies, recettes ou dépenses en plus.
       </p>
-      <button className="plfss-export export-btn" onClick={() => downloadCsv('mesures-plfss.csv', rows.map((r) => ({ ...r, scope: 'securite_sociale', unite: 'Md€', source_document: 'plfss_2027_texte.pdf', qualite_extraction: 'curation_sourcee_non_additive' })))}>Télécharger les mesures et leurs sources (CSV, sans total)</button>
+      <button className="plfss-export export-btn" onClick={() => downloadCsv('mesures-plfss.csv', rows.map((r) => ({ ...r, scope: 'securite_sociale', unite: 'Md€', source_document: 'PLFSS_2027_web.pdf', qualite_extraction: 'curation_sourcee_non_additive' })))}>Télécharger les mesures et leurs sources (CSV, sans total)</button>
       <div className="tbl-wrap" role="region" tabIndex={0} aria-label="Mesures PLFSS, défilement horizontal possible">
         <table className="tbl plfss-table">
           <caption>Mesures du projet de budget de la Sécurité sociale. Les montants sont en Md€ ; l’année et la page source sont indiquées pour chaque mesure. Ne pas additionner les lignes : elles peuvent se recouper.</caption>
@@ -107,7 +107,7 @@ export default function MesuresPLFSS() {
                   <td className="num">
                     <b>{fmt(r.montant_md)}</b>
                   </td>
-                  <td className="num"><a href={publicUrl(`sources/plfss_2027_texte.pdf#page=${r.source_page}`)} target="_blank" rel="noreferrer" aria-label={`PLFSS, page ${r.source_page}, nouvel onglet`}>p. {r.source_page}</a></td>
+                  <td className="num"><a href={plfssPageUrl(r.source_page)} target="_blank" rel="noreferrer" aria-label={`PLFSS, page ${r.source_page}, nouvel onglet`}>p. {r.source_page}</a></td>
                 </tr>
               );
             })}

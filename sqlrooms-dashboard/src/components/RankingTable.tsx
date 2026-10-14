@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { MissionRow } from './Dashboard';
 import { fmtEUR, evolutionLabel, evolutionPct } from '../lib/format';
 import { columnLabels, debtDetailCue, debtMissionName } from '../lib/labels';
-import { publicUrl } from '../lib/publicUrl';
+import { plfPageUrl } from '../lib/sourceLinks';
 
 interface Props {
   data: MissionRow[];
@@ -115,7 +115,7 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
                   <span key={p}>
                     {i > 0 ? ', ' : ''}
                     <a
-                      href={publicUrl(`sources/l17b3210_projet-loi.pdf#page=${p}`)}
+                      href={plfPageUrl(p)}
                       target="_blank"
                       rel="noreferrer"
                       aria-label={`PLF 2027, page ${p}, nouvel onglet`}

@@ -5,7 +5,7 @@
 
 ## Contexte
 
-Le prototype initial ne dispose que de crédits prévus dans un PLF 2027 simulé. Il ne contient pas de série officielle d’exécution historique. L’affirmation « pas de budget à l’équilibre depuis 1974 » nécessite un périmètre précis : les données longues disponibles sur le solde selon la procédure de déficit excessif portent sur les **administrations publiques** et ne décrivent pas à elles seules le budget de l’État.
+Le prototype initial ne dispose que de crédits prévus dans le projet de loi de finances 2027 ; il ne contient pas de série d’exécution historique de ces crédits. L’affirmation « pas de budget à l’équilibre depuis 1974 » nécessite un périmètre précis : les données longues disponibles sur le solde selon la procédure de déficit excessif portent sur les **administrations publiques** et ne décrivent pas à elles seules le budget de l’État.
 
 Les remboursements de principal sont des flux de financement. Ils doivent être montrés séparément des intérêts, de la charge budgétaire totale et des émissions de dette.
 

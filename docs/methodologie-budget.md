@@ -1,13 +1,13 @@
 # Méthodologie du tableau de bord citoyen
 
-La page publique est accessible à `/?page=methodologie` et ne charge pas DuckDB. Elle comporte le glossaire et les sources PDF locales.
+La page publique est accessible à `/?page=methodologie` et ne charge pas DuckDB. Elle comporte le glossaire et les liens directs vers les publications officielles.
 
 ## Sources
 
-- PLF 2027 local `l17b3210_projet-loi.pdf` : récapitulatif p. 307–313, rapport général p. 11–13.
-- PLFSS local `plfss_2027_texte.pdf` : texte fourni, mesures curatées p. 45 et 106–121.
+- [Projet de loi de finances 2027 — Assemblée nationale](https://www.assemblee-nationale.fr/dyn/17/textes/l17b3210-projet-loi.pdf) : récapitulatif p. 307–313 et rapport général p. 11–13.
+- [PLFSS_2027_web.pdf — ministère du Budget](https://www.budget.gouv.fr/documentation/file-download/33499) : mesures curatées, notamment p. 45 et 106–121.
 
-Le PLF est **fictif / simulé** (ADR-001). L’interface est un prototype non officiel ; la présence d’un document local ne prouve pas son authenticité.
+Le tableau de bord est une présentation indépendante de ces documents. Les crédits du PLF et les mesures du PLFSS sont des propositions/prévisions ; ils ne constituent pas des données d’exécution.
 
 ## Calcul des crédits
 
@@ -15,7 +15,7 @@ Chaque KPI mission utilise la ligne total imprimée. Les programmes sont conserv
 
 Les cellules vides sont interprétées comme zéro, avec marqueur de qualité. Cette règle est spécifique au récapitulatif fourni. Les lignes sans crédits restent présentes. Les libellés multi-lignes sont assemblés avant l’attribution des programmes.
 
-LFI 2026 = crédits votés ; PLF 2027 = crédits proposés. Euros courants, sans correction d’inflation. CP et AE sont deux lectures alternatives, jamais additionnées. Les crédits du prototype ne sont pas des dépenses exécutées. Des séries historiques d’exécution distinctes sont présentées plus bas à partir d’AMECO et d’un rapport de la Cour des comptes.
+LFI 2026 = crédits votés ; PLF 2027 = crédits proposés. Euros courants, sans correction d’inflation. CP et AE sont deux lectures alternatives, jamais additionnées. Les crédits prévus ne sont pas des dépenses exécutées. Des séries historiques d’exécution distinctes sont présentées plus bas à partir d’AMECO et d’un rapport de la Cour des comptes.
 
 ## Périmètres et dénominateurs
 
@@ -33,7 +33,7 @@ Le tableau AFT du rapport de la Cour des comptes sur le budget 2024 donne l’ex
 
 La mission « Engagements financiers de l’État » est mise en évidence par un accent bleu et un appel « Voir le détail de la dette et des intérêts ». C’est un repère de navigation vers les programmes, pas une alerte ni un jugement sur leur importance.
 
-Sources et définitions : [AMECO, Commission européenne](https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database/download-annual-data-set-macro-economic-database-ameco_en) et rapport source de la [Cour des comptes (PDF local)](../sources/neb-2024-gestion-dette-tresorerie-etat.pdf). Voir [ADR-006](adr/006-solde-et-dette.md).
+Sources et définitions : [PLF 2027, Assemblée nationale](https://www.assemblee-nationale.fr/dyn/17/textes/l17b3210-projet-loi.pdf), [PLFSS_2027_web.pdf, ministère du Budget](https://www.budget.gouv.fr/documentation/file-download/33499), [AMECO, Commission européenne](https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database/download-annual-data-set-macro-economic-database-ameco_en) et rapport source de la [Cour des comptes](../sources/neb-2024-gestion-dette-tresorerie-etat.pdf). Voir [ADR-006](adr/006-solde-et-dette.md).
 
 > Les 43 Md€ concernent les textes financiers PLF + PLFSS. Les 54 Md€ agrègent un périmètre plus large et une trajectoire à politique inchangée. Ils ne correspondent pas à la variation des crédits du seul budget général entre 2026 et 2027.
 
@@ -41,4 +41,4 @@ La ventilation PLF/PLFSS n’est pas publiée dans les sources disponibles. Les 
 
 ## Reproduction
 
-Voir [contrat-donnees.md](contrat-donnees.md), [glossaire-budget.md](glossaire-budget.md), [ADR-005](adr/005-agregats-citoyens.md), [ADR-006](adr/006-solde-et-dette.md) et [validation.md](validation.md). `scripts/refresh_finances_publiques.py` récupère AMECO et le rapport source puis génère les CSV curatés. Le build de publication copie les CSV et les trois PDF requis dans `public/`, puis `dist/`.
+Voir [contrat-donnees.md](contrat-donnees.md), [glossaire-budget.md](glossaire-budget.md), [ADR-005](adr/005-agregats-citoyens.md), [ADR-006](adr/006-solde-et-dette.md) et [validation.md](validation.md). `scripts/refresh_finances_publiques.py` récupère AMECO et le rapport source puis génère les CSV curatés. Le build de publication copie les CSV et le rapport de la Cour des comptes dans `public/`; les liens PLF/PLFSS ouvrent les éditeurs officiels.

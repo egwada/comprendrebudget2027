@@ -4,7 +4,7 @@
 
 ## Contexte
 
-Le projet utilise un PDF de 349 pages (`l17b3210_projet-loi.pdf`) comme source unique des données budgétaires. Ce document est un projet de loi de finances pour 2027 (fictif / simulé), enregistré à l'Assemblée nationale le 1er octobre 2026. Il est généré depuis Microsoft Word via PDF24 Creator : le texte est natif (pas scanné), mais la structure n'est pas strictement tabulaire.
+Le projet utilise le PDF de 349 pages du projet de loi de finances pour 2027, publié sur le site de l'Assemblée nationale, comme source des crédits budgétaires. La copie utilisée pour l'extraction est `l17b3210_projet-loi.pdf` ; la [publication officielle de l’Assemblée nationale](https://www.assemblee-nationale.fr/dyn/17/textes/l17b3210-projet-loi.pdf) est la référence publique. Le texte est natif (pas scanné), mais les tableaux sont présentés en texte aligné plutôt qu'en cellules PDF formelles.
 
 Aucun dataset structuré correspondant au PLF 2027 n'existe sur data.gouv.fr ni sur data.economie.gouv.fr (seules les LFI 2012–2013 et suivantes sont publiées en open data, et avec retard). Le PDF est donc la source de vérité obligée.
 
@@ -22,7 +22,7 @@ L'analyse du PDF avec `pdfplumber` montre que :
 
 ## Décision
 
-**On utilise `pdfplumber` en mode extraction de texte + parsing scripté (Python + regex).**
+**On utilise `pdfplumber` en mode extraction de texte + parsing scripté (Python + regex), à partir du PDF publié par l’Assemblée nationale.**
 
 ### Détails de la décision
 

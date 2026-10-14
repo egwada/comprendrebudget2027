@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Synchronise les données et sources locales servies avec le dashboard.
+"""Prépare les données et les sources locales servies avec le dashboard.
 
-Ne télécharge aucune source et n'invente aucun chiffre. Les deux PDF locaux,
-non versionnés, doivent être fournis pour reconstruire une publication.
+L’extraction des crédits utilise le PDF PLF versionné. Les liens PLF et PLFSS
+pointent vers leurs publications officielles ; seuls les fichiers nécessaires
+au dashboard sont copiés dans le dossier public.
 """
 import shutil
 import subprocess
@@ -14,9 +15,9 @@ PUBLIC = ROOT / 'sqlrooms-dashboard/public'
 
 
 def main():
-    for name in ('l17b3210_projet-loi.pdf', 'plfss_2027_texte.pdf'):
-        if not (ROOT / name).is_file():
-            raise SystemExit(f'Source locale manquante : {ROOT / name}')
+    plf_pdf = ROOT / 'l17b3210_projet-loi.pdf'
+    if not plf_pdf.is_file():
+        raise SystemExit(f'Source locale manquante : {plf_pdf}')
     for name in (
         'fact_solde_apu.csv', 'fact_solde_budget_general_etat.csv', 'fact_interets_apu.csv',
         'fact_encours_dette_apu.csv', 'fact_financement_dette_etat.csv',
@@ -35,8 +36,9 @@ def main():
     ):
         shutil.copy2(ROOT / 'sources' / name, ROOT / 'data/staging' / name)
         shutil.copy2(ROOT / 'sources' / name, PUBLIC / 'data' / name)
+    # Remove copies from older builds: PLF/PLFSS citations now target their official publishers.
     for name in ('l17b3210_projet-loi.pdf', 'plfss_2027_texte.pdf'):
-        shutil.copy2(ROOT / name, PUBLIC / 'sources' / name)
+        (PUBLIC / 'sources' / name).unlink(missing_ok=True)
     shutil.copy2(
         ROOT / 'sources/neb-2024-gestion-dette-tresorerie-etat.pdf',
         PUBLIC / 'sources/neb-2024-gestion-dette-tresorerie-etat.pdf',

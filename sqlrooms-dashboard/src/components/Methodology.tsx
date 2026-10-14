@@ -1,5 +1,6 @@
 import '../styles.css';
 import { publicUrl } from '../lib/publicUrl';
+import { plfPageUrl, plfssPageUrl } from '../lib/sourceLinks';
 
 const TERMS = [
   [
@@ -26,7 +27,7 @@ const TERMS = [
   ['PLF', 'Projet de loi de finances : proposition de budget présentée au Parlement. Elle n’est pas encore votée et peut changer.'],
   [
     'Dépenses exécutées',
-    'Argent effectivement payé ou utilisé. Ces chiffres ne sont pas disponibles pour les crédits du PLF simulé ; des séries historiques distinctes sont présentées dans la section solde et dette.',
+    'Argent effectivement payé ou utilisé. Les crédits du PLF indiquent des montants prévus, pas les dépenses exécutées ; des séries historiques distinctes sont présentées dans la section solde et dette.',
   ],
   [
     'Mesures de redressement',
@@ -64,22 +65,23 @@ export default function Methodology() {
         <section className="panel">
           <h2>D’où viennent les chiffres ?</h2>
           <p>
-            Le document présenté comme le PLF 2027 est fictif / simulé. Ce tableau de bord est une
-            démonstration : ses chiffres ne décrivent pas le budget réel de l’État et ne sont pas une
-            publication du gouvernement.
+            Les crédits prévisionnels sont extraits du projet de loi de finances pour 2027 publié
+            sur le site de l’Assemblée nationale. Ce tableau de bord est une présentation indépendante
+            des documents sources ; il décrit des crédits proposés, pas des dépenses déjà exécutées.
           </p>
           <ul>
             <li>
-              <a href={publicUrl('sources/l17b3210_projet-loi.pdf#page=307')}>
-                PDF PLF 2027, récapitulatif général, pages 307–313
+              <a href={plfPageUrl(307)} target="_blank" rel="noreferrer">
+                PLF 2027 de l’Assemblée nationale, récapitulatif général, pages 307–313 (nouvel onglet)
               </a>{' '}
               : crédits des missions et programmes. Rapport général, pages 11–13 : chiffres de
               contexte.
             </li>
             <li>
-              <a href={publicUrl('sources/plfss_2027_texte.pdf#page=106')}>PDF PLFSS 2027 local</a> : mesures
-              documentées, articles et exposés des motifs (pages 45 et 106–121). Leur disponibilité
-              locale ne constitue pas une vérification indépendante de leur authenticité.
+              <a href={plfssPageUrl(106)} target="_blank" rel="noreferrer">
+                PLFSS_2027_web.pdf, source officielle du ministère du Budget (nouvel onglet)
+              </a>{' '}
+              : mesures documentées, articles et exposés des motifs (pages 45 et 106–121).
             </li>
           </ul>
         </section>
@@ -186,8 +188,8 @@ export default function Methodology() {
           <p>
             Cette série historique documente le solde des administrations publiques, mais ne permet
             pas à elle seule d’affirmer que le seul budget de l’État n’a pas été à l’équilibre depuis
-            1974. Le PLF 2027 présenté ailleurs dans ce prototype est simulé et n’est pas mélangé à
-            ces données historiques.
+            1974. Les crédits prévisionnels du PLF 2027 restent distincts de ces données historiques
+            d’exécution.
           </p>
           <p>
             La mission « Engagements financiers de l’État » est signalée par un accent bleu et un
