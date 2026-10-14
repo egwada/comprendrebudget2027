@@ -649,6 +649,10 @@ pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap;
 .home-budget-treemap {
   margin-top: 16px;
 }
+.dataset-catalog details { border-top: 1px solid var(--border); padding-top: 8px; }
+.dataset-catalog summary { overflow-wrap: anywhere; }
+.source-file-list li { margin: 8px 0; line-height: 1.55; }
+.source-file-list .sub { display: block; }
 .home-budget-treemap-chart {
   width: 100%;
   height: 540px;

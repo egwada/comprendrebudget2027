@@ -4,14 +4,14 @@ Prototype indépendant React/TypeScript + DuckDB-WASM, à partir des documents o
 
 ## Installation et lancement
 
-Prérequis : Node 22.18+ (tests TypeScript natifs), npm, Python 3.10+, `pdfplumber`, `websocket-client` et Chromium pour les tests headless.
+Prérequis : Node 22.18+ (tests TypeScript natifs), npm, Python 3.10+, `pdfplumber`, `duckdb==1.5.6`, `websocket-client` et Chromium pour les tests headless.
 
 Le PDF officiel du PLF (`l17b3210_projet-loi.pdf`) est versionné à la racine pour régénérer l’extraction des crédits. La copie de travail PLFSS (`plfss_2027_texte.pdf`) est conservée pour la traçabilité de la curation, mais n’est pas publiée dans le site : l’interface pointe vers la publication officielle du ministère du Budget.
 
 ```bash
 # depuis sqlrooms-dashboard/
 npm ci
-python3 -m pip install pdfplumber websocket-client
+python3 -m pip install pdfplumber websocket-client duckdb==1.5.6
 npm run prepare:data
 npm run dev
 ```
@@ -23,9 +23,10 @@ npm run dev
 ```bash
 npm test                 # 7 tests unitaires : formatage, contraste, treemap et CSV
 npm run test:data       # 11 tests de cohérence des données
+npm run test:database   # vérifie le fichier DuckDB téléchargeable et ses schémas
 npm run lint
 npm run build:publication
-npm run test:headless   # 114 contrôles sur le build servi en statique
+npm run test:headless   # 117 contrôles sur le build servi en statique
 # si le port par défaut 8901 est occupé :
 python3 ../scripts/validate_headless.py --port 8928
 ```
@@ -52,7 +53,7 @@ npm run build:publication
 npm run preview -- --host 127.0.0.1
 ```
 
-Publier **tout `dist/`**, y compris `data/`, `sources/` et `duckdb/`. Les URLs respectent `BASE_URL` : le build local cible la racine, tandis que le workflow Pages utilise `/comprendrebudget2027/`. Servir `.wasm` avec `application/wasm`, `.js` avec un type JavaScript, `.pdf` avec `application/pdf`. Le worker et le WASM doivent rester sur la même origine. Aucun routage serveur spécial : les vues utilisent des paramètres de requête et les missions un fragment d’URL.
+Publier **tout `dist/`**, y compris `data/`, `sources/`, `duckdb/` et `downloads/comprendrebudget2027.duckdb`. Les URLs respectent `BASE_URL` : le build local cible la racine, tandis que le workflow Pages utilise `/comprendrebudget2027/`. Servir `.wasm` avec `application/wasm`, `.js` avec un type JavaScript, `.pdf` avec `application/pdf`. Le worker et le WASM doivent rester sur la même origine. Aucun routage serveur spécial : les vues utilisent des paramètres de requête et les missions un fragment d’URL.
 
 Vérifier les droits de redistribution des sources et conserver les mentions de provenance et de statut prévisionnel. Ne pas conserver les CSV avec un cache immutable : leurs chemins ne sont pas versionnés. Les assets hachés peuvent être mis en cache longtemps.
 

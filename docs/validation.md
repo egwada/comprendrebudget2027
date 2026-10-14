@@ -1,6 +1,6 @@
 # Validation — tableau de bord budgétaire citoyen
 
-**Résultat : 114/114 contrôles headless PASS, 11/11 tests de données PASS, 7/7 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
+**Résultat : 117/117 contrôles headless PASS, 11/11 tests de données PASS, 7/7 tests unitaires PASS et 5/5 tests du fichier DuckDB téléchargeable.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
 
 Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vue initiale. Les défauts d’extraction signalés à l’époque sont corrigés, et les KPI utilisent désormais les totaux mission imprimés, pas la somme des programmes extraits.
 
@@ -14,6 +14,7 @@ npm run refresh:finance
 npm run prepare:data
 npm test
 npm run test:data
+npm run test:database
 npm run lint
 npm run build:publication
 npm run test:headless
@@ -21,7 +22,7 @@ npm run test:headless
 python3 ../scripts/validate_headless.py --port 8928
 ```
 
-Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.18+, les deux PDF locaux du prototype et les sources curatées sous `sources/`. `npm run refresh:finance` rafraîchit AMECO, la série INSEE et le rapport de la Cour des comptes ; le build de publication sert les CSV et les trois PDF sur la même origine.
+Prérequis : Python avec `pdfplumber`, `duckdb==1.5.6` et `websocket-client`, Chromium, Node 22.18+, le PDF PLF local d’extraction et les sources curatées sous `sources/`. `npm run refresh:finance` rafraîchit AMECO, la série INSEE et le rapport de la Cour des comptes ; le build sert les CSV, la base DuckDB et le rapport de la Cour sur la même origine, tandis que les liens PLF/PLFSS pointent aux éditeurs officiels.
 
 ## Méthode
 
@@ -49,6 +50,7 @@ Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.1
 |---|---|
 | Entrée | Titre citoyen, source officielle PLF citée, distinction crédits prévus/dépenses exécutées |
 | Accueil | Cinq agrégats sourcés et un treemap hiérarchique : 32 missions, programmes en nuances, tableau alternatif de 135 lignes ; note ECU/EUR en bas de page |
+| Réutilisation | Base DuckDB téléchargeable : 8 tables de données, 5 vues analytiques et 2 catalogues de schéma ; dictionnaire des 10 fichiers de `sources/` sur la méthodologie |
 | Budget | CP/AE 2026/2027, delta, 32 missions, classement, calcul pour 100 €, recherche, réinitialisation et graphiques masqués par défaut |
 | Tableaux | 32 lignes missions, total en pied, tri asc/desc et `aria-sort`, tri Entrée/Espace ; mise en évidence bleue neutre et appel au clic pour le poste dette |
 | Fiche mission | Investir 2030 et cinq programmes, total imprimé, part du budget complet, pages 309/310, focus, AE zéro |

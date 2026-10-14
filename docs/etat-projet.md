@@ -108,7 +108,8 @@ Comportements : onglets persistants avec `aria-current="page"`, retour Accueil s
 
 | Type | Résultat |
 |------|----------|
-| Contrôles headless (UI réelle navigateur) | ✅ 114/114 PASS |
+| Contrôles headless (UI réelle navigateur) | ✅ 117/117 PASS |
+| Base DuckDB téléchargeable et dictionnaire de schéma | ✅ 5/5 PASS |
 | Tests de données cohérence Python (budget + finances publiques) | ✅ 11/11 PASS |
 | Tests unitaires Node | ✅ 7/7 PASS |
 | Lint (oxlint) | ✅ PASS sans avertissement |
@@ -151,6 +152,11 @@ Comportements : onglets persistants avec `aria-current="page"`, retour Accueil s
 - [x] Section Mesures PLFSS (17 mesures, 278,7 / 5,1 / −12,7 Md€)
 - [x] Contexte éditorial (43/54 Md€ distincts, non-additifs)
 - [x] Exports CSV sourcés (classement, programmes, brut, contexte, PLFSS)
+
+### Données et réutilisation
+- [x] Base DuckDB téléchargeable, générée depuis les mêmes CSV que le dashboard
+- [x] 8 tables de données, 5 vues analytiques, catalogue de tables/champs et descriptions dans la méthodologie
+- [x] Liste documentée des 10 fichiers d’origine archivés dans `sources/`
 
 ### Accessibilité et robustesse
 - [x] Navigation clavier (Entrée/Espace/Tab), focus restauré, retour navigateur

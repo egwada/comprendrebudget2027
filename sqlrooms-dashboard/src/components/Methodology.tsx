@@ -1,6 +1,37 @@
+import { useEffect, useState } from 'react';
 import '../styles.css';
 import { publicUrl } from '../lib/publicUrl';
 import { plfPageUrl, plfssPageUrl } from '../lib/sourceLinks';
+
+interface DictionaryColumn {
+  name: string;
+  type: string;
+  nullable: boolean;
+  description: string;
+}
+
+interface DictionaryObject {
+  name: string;
+  type: 'TABLE' | 'VIEW';
+  description: string;
+  source: string;
+  coverage: string;
+  rows: number;
+  columns: DictionaryColumn[];
+}
+
+interface SourceFileInfo {
+  name: string;
+  description: string;
+  coverage: string;
+  database_objects: string;
+}
+
+interface DataDictionary {
+  database: { file_name: string; duckdb_python_version: string; description: string };
+  objects: DictionaryObject[];
+  source_files: SourceFileInfo[];
+}
 
 const TERMS = [
   [
@@ -48,6 +79,27 @@ const TERMS = [
 ];
 
 export default function Methodology() {
+  const [dictionary, setDictionary] = useState<DataDictionary | null>(null);
+  const [dictionaryError, setDictionaryError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(publicUrl('data/data_dictionary.json'))
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json() as Promise<DataDictionary>;
+      })
+      .then((data) => {
+        if (!cancelled) setDictionary(data);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setDictionaryError(String(error));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="page">
       <a className="skip-link" href="#methodologie">
@@ -83,6 +135,95 @@ export default function Methodology() {
               </a>{' '}
               : mesures documentées, articles et exposés des motifs (pages 45 et 106–121).
             </li>
+          </ul>
+        </section>
+        <section className="panel" aria-labelledby="data-download-title">
+          <h2 id="data-download-title">Réutiliser les données pour d’autres analyses</h2>
+          <p>
+            Téléchargez la base DuckDB utilisée comme modèle de données pour explorer les mêmes
+            tables et vues, sans devoir refaire l’extraction des PDF. Le fichier inclut le catalogue
+            des tables et la description de leurs colonnes.
+          </p>
+          <p>
+            <a className="export-btn" href={publicUrl('downloads/comprendrebudget2027.duckdb')} download>
+              Télécharger la base DuckDB (comprendrebudget2027.duckdb)
+            </a>
+          </p>
+          <p className="hint">
+            Pour l’ouvrir avec Python : <code>duckdb.connect("comprendrebudget2027.duckdb", read_only=True)</code>.
+            Dans le client DuckDB, essayez <code>SHOW TABLES;</code>, <code>DESCRIBE fact_credits;</code> ou
+            consultez <code>dataset_catalog</code> et <code>column_catalog</code>.
+          </p>
+          <p>
+            <a href="https://github.com/egwada/comprendrebudget2027" target="_blank" rel="noreferrer">
+              Code du projet sur GitHub (nouvel onglet)
+            </a>{' '}·{' '}
+            <a href="https://github.com/egwada/comprendrebudget2027/tree/main/sources" target="_blank" rel="noreferrer">
+              Tous les fichiers du dossier sources/ (nouvel onglet)
+            </a>
+          </p>
+          <h3>Tables et vues du fichier DuckDB</h3>
+          {dictionaryError && <p role="alert">Le dictionnaire des champs est indisponible : {dictionaryError}</p>}
+          {!dictionary && !dictionaryError && <p role="status">Chargement du dictionnaire des données…</p>}
+          {dictionary && (
+            <>
+              <p className="hint">
+                Version du générateur DuckDB : {dictionary.database.duckdb_python_version}. Les
+                tables source conservent les périmètres et champs de provenance ; les vues commencent
+                par <code>v_</code> et sont calculées depuis ces tables.
+              </p>
+              <div className="dataset-catalog">
+                {dictionary.objects.map((object) => (
+                  <details key={object.name}>
+                    <summary>
+                      <code>{object.name}</code> · {object.type} · {object.rows.toLocaleString('fr-FR')} lignes
+                    </summary>
+                    <p>{object.description}</p>
+                    <p className="sub"><b>Source :</b> {object.source} · <b>Période/périmètre :</b> {object.coverage}</p>
+                    <div className="tbl-wrap" role="region" aria-label={`Schéma des champs de ${object.name}`} tabIndex={0}>
+                      <table className="tbl">
+                        <thead>
+                          <tr>
+                            <th scope="col">Champ</th>
+                            <th scope="col">Type DuckDB</th>
+                            <th scope="col">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {object.columns.map((column) => (
+                            <tr key={column.name}>
+                              <td><code>{column.name}</code></td>
+                              <td>{column.type}{column.nullable ? ' · NULL autorisé' : ''}</td>
+                              <td>{column.description}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </>
+          )}
+          <h3>Fichiers d’origine et données curatées dans sources/</h3>
+          <p className="hint">
+            Les fichiers bruts permettent de vérifier la provenance ; les CSV curatés sont ceux
+            chargés dans la base DuckDB. Les deux PDF budgétaires sont également cités plus haut via
+            leurs publications officielles.
+          </p>
+          <ul className="source-file-list">
+            {dictionary?.source_files.map((file) => (
+              <li key={file.name}>
+                <a
+                  href={`https://github.com/egwada/comprendrebudget2027/blob/main/sources/${encodeURIComponent(file.name)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <code>{file.name}</code>
+                </a>
+                {' — '}{file.description} <span className="sub">{file.coverage} · contenu associé : {file.database_objects}</span>
+              </li>
+            ))}
           </ul>
         </section>
         <section className="panel">

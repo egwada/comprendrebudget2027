@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "prepare:data": "python3 ../scripts/prepare_dashboard.py",
+    "prepare:data": "python3 ../scripts/prepare_dashboard.py && npm run prepare:database",
+    "prepare:database": "cd .. && python3 scripts/build_database.py",
     "refresh:finance": "cd .. && python3 scripts/refresh_finances_publiques.py",
     "build:publication": "npm run prepare:data && npm run build",
     "test:data": "cd .. && python3 scripts/test_data.py && python3 scripts/test_finances_publiques.py",
+    "test:database": "cd .. && python3 scripts/test_database_bundle.py",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:headless": "python3 ../scripts/validate_headless.py",
     "lint": "oxlint src",
