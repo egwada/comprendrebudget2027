@@ -594,9 +594,12 @@ pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap;
 }
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
 }
+.home-card { grid-column: span 2; }
+.home-card:nth-child(4) { grid-column: 2 / span 2; grid-row: 2; }
+.home-card:nth-child(5) { grid-column: 4 / span 2; grid-row: 2; }
 .home-card {
   display: flex;
   flex-direction: column;
@@ -661,11 +664,24 @@ pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap;
 .home-treemap-legend li { display: flex; align-items: center; gap: 8px; }
 .home-treemap-legend li span { width: 14px; height: 14px; flex: 0 0 14px; border: 1px solid var(--border); border-radius: 3px; }
 
+@media (max-width: 900px) {
+  .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-grid .home-card,
+  .home-grid .home-card:nth-child(4),
+  .home-grid .home-card:nth-child(5) { grid-column: auto; grid-row: auto; }
+  .home-grid .home-card:nth-child(5):last-child {
+    grid-column: 1 / -1;
+    width: calc(50% - 8px);
+    justify-self: center;
+  }
+}
+
 @media (max-width: 600px) {
   .tab-list { gap: 6px; }
   .tab-link { padding: 7px 10px; font-size: 13px; }
   .tab-secondary { margin-left: 0; width: 100%; text-align: right; margin-top: 6px; }
   .home-grid { grid-template-columns: 1fr; }
+  .home-grid .home-card:nth-child(5):last-child { grid-column: auto; width: auto; }
   .home-budget-treemap-chart { height: 560px; }
 }
 
