@@ -3,7 +3,6 @@ import { query } from '../duckdb';
 import RankingTable from './RankingTable';
 import MissionDetail, { type QualityRow } from './MissionDetail';
 import ExpertData from './ExpertData';
-import BudgetContext from './BudgetContext';
 import { exportCredits } from '../lib/csv';
 import { fmtEUR, fmtPct, evolutionPct, evolutionLabel, evolutionPhrase } from '../lib/format';
 import {
@@ -159,7 +158,9 @@ export default function Dashboard() {
   const budgetTotal = rows.reduce((s, r) => s + r.y2027, 0);
   const navigate = (name: string | null) => {
     navigationPending.current = true;
-    history.pushState(null, '', name ? `#mission=${encodeURIComponent(name)}` : location.pathname);
+    const url = new URL(location.href);
+    url.hash = name ? `mission=${encodeURIComponent(name)}` : '';
+    history.pushState(null, '', url.toString());
     setSelected(name);
   };
   const selectMission = (name: string) => {
@@ -174,15 +175,7 @@ export default function Dashboard() {
   const creditLabels = creditTypeLabels[creditType];
 
   return (
-    <div className="page">
-      <a className="skip-link" href="#contenu">
-        Aller au contenu
-      </a>
-      <header className="hero">
-        <div className="hero-badge">Prototype · données de démonstration PLF 2027</div>
-        <h1>Où va l’argent prévu par l’État en 2027 ?</h1>
-        <p className="sub">{sectionLabels.heroSub}</p>
-      </header>
+    <div>
       <nav className="toolbar" aria-label="Filtres budgétaires">
         <div className="seg" role="group" aria-label="Type de crédits">
           {(Object.keys(creditTypeLabels) as ('CP' | 'AE')[]).map((ct) => (
@@ -223,7 +216,7 @@ export default function Dashboard() {
         <b>{acronymHelp.intro}</b> {creditLabels.help} {acronymHelp.LFI} {acronymHelp.PLF}{' '}
         {acronymHelp.budgetGeneral}
       </p>
-      <main id="contenu" tabIndex={-1}>
+      <div>
         <p className="note">{sectionLabels.note}</p>
         <p className="hint">
           Les chiffres couvrent le budget général de l’État, remboursements et dégrèvements d’impôts compris.{' '}
@@ -442,7 +435,6 @@ export default function Dashboard() {
                 </button>
               </section>
             )}
-            {!selected && <BudgetContext />}
             {!selected && quality.some((q) => q.ecart !== 0) && (
               <p className="mes-warning quality-alert">
                 Pour certains domaines, la somme des programmes ne correspond pas au total indiqué
@@ -452,13 +444,7 @@ export default function Dashboard() {
             )}
           </>
         )}
-      </main>
-      <footer className="src">
-        Démonstration non officielle : le document présenté comme le PLF 2027 est fictif / simulé.
-        Ces chiffres ne décrivent pas le budget réel de l’État et ne constituent pas une annonce du
-        gouvernement. Source des crédits affichés : récapitulatif des domaines et programmes,
-        pages 307–313.
-      </footer>
+      </div>
     </div>
   );
 }

@@ -149,6 +149,11 @@ class Browser:
                 time.sleep(.1)
 
 
+def _nav(b, view):
+    b.click(f'a[href="?vue={view}"]')
+    time.sleep(0.3)
+
+
 def audit_accessibility(browser, label):
     source = ROOT / 'sqlrooms-dashboard/node_modules/axe-core/axe.min.js'
     if not source.is_file():
@@ -161,12 +166,14 @@ def audit_accessibility(browser, label):
 
 def run_ui_checks(browser, exp):
     b = browser
+    b.wait("!!document.querySelector('.tab-nav')")
+    _nav(b, 'budget')
     b.wait("!!document.querySelector('.kpis')")
     check('pas d’écran d’erreur', not b.js("document.body.innerText.includes('Erreur au lancement')"))
     check('titre citoyen', b.js("document.querySelector('h1').innerText.includes('Où va l’argent')"))
     check('avertissement sur les crédits prévus', b.js("document.body.innerText.includes('pas l’argent déjà dépensé')"))
     check('données fictives annoncées', b.js("document.body.innerText.includes('fictif / simulé')"))
-    b.wait("document.querySelector('.plfss-table tbody')?.rows.length === 17")
+    _nav(b, 'dette')
     b.wait("document.querySelector('.finance-financing-table tbody')?.rows.length === 6")
     b.wait("!!document.querySelector('#state-balance-title')")
     check('solde État : série INSEE du budget général 2009–2025', b.js("document.querySelector('#state-balance-title').parentElement.innerText.includes('2009–2025') && document.querySelector('#state-balance-title').parentElement.innerText.includes('comptes spéciaux sont publiés à part')"))
@@ -177,11 +184,14 @@ def run_ui_checks(browser, exp):
     check('graphiques encours utilisent toute la largeur disponible', b.js("(() => { const p=document.querySelector('.finance-debt-panel'), g=document.querySelector('.finance-chart-grid'); return !!p && !!g && p.getBoundingClientRect().width >= g.getBoundingClientRect().width * .95; })()"))
     check('dette État : intérêts, principal et émissions séparés', b.js("document.querySelector('.finance-financing-table tbody tr:last-child').innerText.includes('155,1 Md€') && document.querySelector('.finance-financing-table tbody tr:last-child').innerText.includes('46,5 Md€') && document.querySelector('.finance-financing-table tbody tr:last-child').innerText.includes('285 Md€')"))
     check('dette État : intérêts indisponibles avant 2023 restent manquants', b.js("document.querySelector('.finance-financing-table tbody tr:first-child').innerText.includes('—')"))
+    _nav(b, 'budget')
     audit_accessibility(b, 'vue citoyenne')
     b.js("window.__exportBlob = null; window.__createURL = URL.createObjectURL; URL.createObjectURL = blob => { window.__exportBlob = blob; return window.__createURL(blob); }")
     b.js("document.querySelector('.skip-link').focus()")
+    b.key('Enter')
+    check('skip-link mène au contenu principal', b.js("document.activeElement.id") == 'contenu')
     b.key('Tab')
-    check('tabulation : filtres accessibles', b.js("document.activeElement === document.querySelector('.seg button')"))
+    check('tabulation : premier focus dans le contenu', b.js("document.activeElement === document.querySelector('.seg button')"))
     check('focus visible', b.js("getComputedStyle(document.activeElement).outlineStyle === 'solid'"))
     for ct in ('CP', 'AE'):
         b.click(f'.seg button:nth-child({1 if ct == "CP" else 2})')
@@ -281,6 +291,7 @@ def run_ui_checks(browser, exp):
     b.wait("!!document.querySelector('.mission-detail')")
     check('comparatif : clic ouvre la mission au libellé complet', b.js("document.querySelector('#mission-title').innerText") == exp['CP']['top'])
     b.click('.back-btn')
+    _nav(b, 'contexte')
     b.wait("document.querySelectorAll('.ctx-card').length === 6 && document.querySelector('.plfss-table tbody')?.rows.length === 17")
     context = b.js("document.querySelector('.budget-context').innerText")
     check('contexte : 43 et 54 Md€ distingués sans les additionner', '43 Md€' in context and '54 Md€' in context and 'Les 43 Md€ sont déjà compris dans les 54 Md€' in context)
@@ -288,9 +299,6 @@ def run_ui_checks(browser, exp):
     check('PLFSS : 17 mesures sans total', b.js("document.querySelector('.plfss-table tbody').rows.length === 17 && !document.querySelector('.plfss-table tfoot')"))
     check('PLFSS : ONDAM, économies et solde', all(value in context for value in ('278,7 Md€', '5,1 Md€', '−12,7 Md€')))
     check('PLFSS : réserves', 'pas publiée' in context and 'ne pas additionner' in context.lower())
-    b.type('Défense')
-    check('contexte indépendant des filtres', b.js("document.querySelectorAll('.ctx-card').length") == 6 and b.js("document.querySelector('.plfss-table tbody').rows.length") == 17)
-    b.click('.reset-btn')
     b.click('.context-export')
     records = list(csv.DictReader(io.StringIO(b.js('window.__exportBlob.text()').lstrip('\ufeff'))))
     check('export contexte : six chiffres et dérivation signalée', len(records) == 6 and any(r['qualite_extraction'] == 'derive' for r in records))
@@ -300,6 +308,7 @@ def run_ui_checks(browser, exp):
     check('export PLFSS non additif et sourcé', len(records) == 17 and all(r['source_document'] == 'plfss_2027_texte.pdf' for r in records))
     for name in ('l17b3210_projet-loi.pdf', 'plfss_2027_texte.pdf', 'neb-2024-gestion-dette-tresorerie-etat.pdf'):
         check(f'PDF source servi : {name}', b.js(f"fetch('/sources/{name}').then(r => r.ok && r.headers.get('content-type').includes('pdf'))"))
+    _nav(b, 'budget')
     b.click('.expert-toggle')
     b.command('Emulation.setDeviceMetricsOverride', {'width': 375, 'height': 812, 'deviceScaleFactor': 1, 'mobile': True})
     time.sleep(.2)
@@ -337,7 +346,7 @@ def run_quality_checks(browser, port, exp):
         path.write_text(output.getvalue(), encoding='utf-8')
         browser.command('Network.enable')
         browser.command('Network.setCacheDisabled', {'cacheDisabled': True})
-        browser.command('Page.navigate', {'url': f'http://localhost:{port}/?quality-test=1'})
+        browser.command('Page.navigate', {'url': f'http://localhost:{port}/?quality-test=1&vue=budget'})
         browser.wait("!!document.querySelector('.quality-alert')")
         check('écart injecté : KPI reste le total imprimé', fmt(exp['CP']['t27']) in browser.js("document.querySelector('.kpis').innerText"))
         browser.type('Investir')

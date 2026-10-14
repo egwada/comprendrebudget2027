@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { query } from '../duckdb';
 import MesuresPLFSS from './MesuresPLFSS';
-import SoldeEtDette from './SoldeEtDette';
 import { downloadCsv } from '../lib/csv';
 import { contextLabels } from '../lib/labels';
 
@@ -94,7 +93,6 @@ export default function BudgetContext() {
         <p className="hint">{contextLabels.plfssExplanation}</p>
         <MesuresPLFSS />
       </section>
-      <SoldeEtDette />
     </section>
   );
 }
