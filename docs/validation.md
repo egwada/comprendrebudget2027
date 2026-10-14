@@ -1,6 +1,6 @@
 # Validation — tableau de bord budgétaire citoyen
 
-**Résultat : 107/107 contrôles headless PASS, 11/11 tests de données PASS, 5/5 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
+**Résultat : 111/111 contrôles headless PASS, 11/11 tests de données PASS, 7/7 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
 
 Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vue initiale. Les défauts d’extraction signalés à l’époque sont corrigés, et les KPI utilisent désormais les totaux mission imprimés, pas la somme des programmes extraits.
 
@@ -48,7 +48,7 @@ Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.1
 | Domaine | Contrôles validés |
 |---|---|
 | Entrée | Titre citoyen, avertissement prévision/exécution, caractère simulé annoncé |
-| Accueil | Cinq agrégats avec année, périmètre, statut et source ; CP, solde exécuté, encours, intérêts et principal amorti |
+| Accueil | Cinq agrégats sourcés et un treemap hiérarchique : 32 missions, programmes en nuances, tableau alternatif de 135 lignes ; note ECU/EUR en bas de page |
 | Budget | CP/AE 2026/2027, delta, 32 missions, classement, calcul pour 100 €, recherche, réinitialisation et graphiques masqués par défaut |
 | Tableaux | 32 lignes missions, total en pied, tri asc/desc et `aria-sort`, tri Entrée/Espace ; mise en évidence bleue neutre et appel au clic pour le poste dette |
 | Fiche mission | Investir 2030 et cinq programmes, total imprimé, part du budget complet, pages 309/310, focus, AE zéro |

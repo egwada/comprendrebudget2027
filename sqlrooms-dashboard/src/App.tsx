@@ -154,6 +154,11 @@ export default function App() {
         Ces chiffres ne décrivent pas le budget réel de l’État et ne constituent pas une annonce du
         gouvernement. Source des crédits affichés : récapitulatif des domaines et programmes,
         pages 307–313.
+        <p className="currency-note">
+          <b>ECU</b> signifie « unité de compte européenne ». AMECO exprime les années antérieures à
+          1999 en ECU, puis les suivantes en euros (EUR) ; lors du passage à l’euro, 1 ECU = 1 EUR.
+          Ces montants historiques ne sont pas corrigés de l’inflation.
+        </p>
       </footer>
     </div>
   );

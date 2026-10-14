@@ -332,8 +332,8 @@ body {
 
 /* ---- Tableau ---- */
 .tbl-wrap { overflow-x: auto; }
-table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tbl th {
+table.tbl, table.home-treemap-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th, .home-treemap-table th {
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
@@ -344,10 +344,11 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
   white-space: nowrap;
   user-select: none;
 }
+.home-treemap-table th { text-align: left; }
 .tbl th.sortable { cursor: pointer; }
 .tbl th.sortable:hover { color: var(--blue); }
 .tbl th:first-child, .tbl td:first-child { text-align: left; }
-.tbl td {
+.tbl td, .home-treemap-table td {
   padding: 7px 10px;
   border-bottom: 1px solid #f0f0f4;
   font-variant-numeric: tabular-nums;
@@ -454,6 +455,7 @@ footer.src {
   color: var(--muted);
   line-height: 1.6;
 }
+.currency-note { margin: 8px 0 0; }
 
 button { font: inherit; cursor: pointer; }
 .toolbar > button, .explore-btn, .export-btn { background: #fff; color: var(--blue); border: 1px solid #747480; padding: 10px 14px; border-radius: 6px; }
@@ -479,7 +481,7 @@ p { line-height: 1.6; }
 .ranking-bar { height: 10px; background: #eeeef6; border-radius: 8px; overflow: hidden; }
 .ranking-bar i { display: block; height: 100%; background: var(--blue); }
 .ranking-meta { color: var(--muted); font-size: 14px; }
-.tbl caption { text-align: left; padding: 12px 0; color: var(--muted); font-size: 13px; }
+.tbl caption, .home-treemap-table caption { text-align: left; padding: 12px 0; color: var(--muted); font-size: 13px; }
 .tbl tbody th { text-transform: none; letter-spacing: normal; font-size: 13px; white-space: normal; text-align: left; }
 .tbl .sort-btn { border: 0; padding: 6px; background: transparent; color: var(--blue); font-weight: 700; }
 .mission-link { border: 0; background: transparent; text-align: left; color: var(--blue); text-decoration: underline; padding: 4px; }
@@ -641,11 +643,30 @@ pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap;
   color: var(--muted);
 }
 
+.home-budget-treemap-chart {
+  width: 100%;
+  height: 540px;
+  min-width: 0;
+  margin: 16px 0;
+}
+.home-treemap-mission, .home-treemap-program { transition: filter 0.15s; }
+.home-treemap-program:hover { filter: brightness(1.12); }
+.home-treemap-legend ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px 16px;
+  padding-left: 0;
+  list-style: none;
+}
+.home-treemap-legend li { display: flex; align-items: center; gap: 8px; }
+.home-treemap-legend li span { width: 14px; height: 14px; flex: 0 0 14px; border: 1px solid var(--border); border-radius: 3px; }
+
 @media (max-width: 600px) {
   .tab-list { gap: 6px; }
   .tab-link { padding: 7px 10px; font-size: 13px; }
   .tab-secondary { margin-left: 0; width: 100%; text-align: right; margin-top: 6px; }
   .home-grid { grid-template-columns: 1fr; }
+  .home-budget-treemap-chart { height: 560px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

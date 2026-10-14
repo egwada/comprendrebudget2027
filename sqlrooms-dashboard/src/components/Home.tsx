@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { query } from '../duckdb';
 import { fmtEUR, evolutionLabel } from '../lib/format';
 import type { View } from '../lib/views';
+
+const HomeBudgetTreemap = lazy(() => import('./HomeBudgetTreemap'));
 
 interface HomeKPI {
   label: string;
@@ -173,6 +175,9 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
           </a>
         ))}
       </div>
+      <Suspense fallback={<p role="status">Chargement du treemap budgétaire…</p>}>
+        <HomeBudgetTreemap />
+      </Suspense>
     </div>
   );
 }

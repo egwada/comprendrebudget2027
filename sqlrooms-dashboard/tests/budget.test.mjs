@@ -9,6 +9,11 @@ import {
   colorFor,
 } from '../src/lib/format.ts';
 import { serializeCsv } from '../src/lib/csv.ts';
+import {
+  buildBudgetTreemap,
+  missionTreemapColor,
+  programTreemapColor,
+} from '../src/lib/budgetTreemap.ts';
 
 const luminance = (hex) => {
   const c = [1, 3, 5]
@@ -68,6 +73,39 @@ test('contraste des libellés treemap >= 4,5 sur toute la palette', () => {
     assert.ok((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05) >= 4.5, `${fg} sur ${bg}`);
   }
   assert.equal(seen.size, 10);
+});
+
+test('treemap hiérarchique : programmes sous missions et surfaces réconciliées aux totaux publiés', () => {
+  const tree = buildBudgetTreemap([
+    { mission: 'Mission A', programme: '(total mission)', montant: 100 },
+    { mission: 'Mission A', programme: 'Programme 1', montant: 30 },
+    { mission: 'Mission A', programme: 'Programme 2', montant: 70 },
+    { mission: 'Mission B', programme: '(total mission)', montant: 50 },
+    { mission: 'Mission B', programme: 'Programme 3', montant: 40 },
+    { mission: 'Mission B', programme: 'Programme 4', montant: 60 },
+    { mission: 'Mission B', programme: 'Programme sans crédits', montant: 0 },
+  ]);
+
+  assert.equal(tree.length, 2);
+  assert.equal(tree[0].mission, 'Mission A');
+  assert.equal(tree[0].amount, 100);
+  assert.equal(tree[0].children.reduce((sum, program) => sum + program.size, 0), 100);
+  assert.equal(tree[1].amount, 50);
+  assert.equal(tree[1].children.reduce((sum, program) => sum + program.size, 0), 50);
+  assert.equal(tree[1].children.find((program) => program.programme === 'Programme 3').amount, 40);
+  assert.ok(!tree[1].children.some((program) => program.programme === 'Programme sans crédits'));
+});
+
+test('treemap : teintes différenciées et contraste lisible', () => {
+  const missionColors = new Set(Array.from({ length: 32 }, (_, i) => missionTreemapColor(`Mission ${i}`)));
+  assert.ok(missionColors.size >= 30);
+  const shades = Array.from({ length: 6 }, (_, i) => programTreemapColor('Mission A', i));
+  assert.equal(new Set(shades).size, 6);
+  for (const background of shades) {
+    const foreground = labelColorFor(background);
+    const l1 = luminance(background), l2 = luminance(foreground);
+    assert.ok((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05) >= 4.5);
+  }
 });
 
 test('CSV UTF-8, virgules, guillemets et nouvelles lignes échappés', () => {

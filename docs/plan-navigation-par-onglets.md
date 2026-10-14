@@ -62,5 +62,5 @@ Le pipeline de données et les calculs budgétaires ne doivent pas changer dans 
 ## Décisions retenues à l’implémentation
 
 1. Les quatre vues principales sont Accueil, Budget de l’État, Solde et dette, Mesures et contexte ; la méthodologie reste un lien secondaire.
-2. L’accueil contient cinq cartes : total CP 2027 et évolution, dernier solde exécuté du budget général, encours APU, intérêts APU et principal MLT amorti par l’État. Chaque carte indique année, périmètre, statut et source ; le repère 43/54 Md€ reste dans la vue Contexte pour ne pas charger l’accueil.
+2. L’accueil contient cinq cartes : total CP 2027 et évolution, dernier solde exécuté du budget général, encours APU, intérêts APU et principal MLT amorti par l’État. Chaque carte indique année, périmètre, statut et source ; le repère 43/54 Md€ reste dans la vue Contexte pour ne pas charger l’accueil. Un treemap CP 2027 présente les programmes en nuances regroupées par mission, avec un tableau alternatif des montants.
 3. La navigation utilise des liens HTML ordinaires, `aria-current="page"` et un routeur local ; les vues déjà ouvertes restent montées pour conserver les filtres Budget.
