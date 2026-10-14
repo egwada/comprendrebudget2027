@@ -646,6 +646,9 @@ pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap;
   color: var(--muted);
 }
 
+.home-budget-treemap {
+  margin-top: 16px;
+}
 .home-budget-treemap-chart {
   width: 100%;
   height: 540px;

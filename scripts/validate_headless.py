@@ -177,6 +177,7 @@ def run_ui_checks(browser, exp):
     check('accueil : tableau alternatif de 135 programmes, sans total en double', b.js("document.querySelectorAll('.home-treemap-values tbody tr').length === 135 && !document.querySelector('.home-treemap-values tfoot')"))
     check('note ECU/EUR présente en bas de page', b.js("document.querySelector('.currency-note').innerText.includes('1 ECU = 1 EUR') && document.querySelector('.currency-note').innerText.includes('pas corrigés de l’inflation')"))
     check('sans paramètre : accueil actif', b.js("document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue=accueil'"))
+    check('accueil : espacement régulier entre les cartes et le treemap', b.js("Math.round(document.querySelector('.home-budget-treemap').getBoundingClientRect().top - document.querySelector('.home-grid').getBoundingClientRect().bottom) === 16"))
     check('accueil : cinq repères avec année, périmètre, statut et source', b.js("[...document.querySelectorAll('.home-card-meta')].every(e => e.innerText.split('·').length >= 4)"))
     check('accueil : principal remboursé, année et périmètre explicites', b.js("[...document.querySelectorAll('.home-card')].some(e => e.innerText.includes('Principal de dette') && e.innerText.includes('2024') && e.innerText.includes('État'))"))
     b.click('.home-card:first-child')

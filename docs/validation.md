@@ -1,6 +1,6 @@
 # Validation — tableau de bord budgétaire citoyen
 
-**Résultat : 112/112 contrôles headless PASS, 11/11 tests de données PASS, 7/7 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
+**Résultat : 113/113 contrôles headless PASS, 11/11 tests de données PASS, 7/7 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
 
 Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vue initiale. Les défauts d’extraction signalés à l’époque sont corrigés, et les KPI utilisent désormais les totaux mission imprimés, pas la somme des programmes extraits.
 
