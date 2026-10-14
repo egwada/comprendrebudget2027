@@ -1,7 +1,7 @@
 # Plan — Solde budgétaire et dette
 
 **Branche** : `feat/deficit-dette-historique`  
-**Statut** : plan enregistré ; données officielles à rechercher et vérifier.  
+**Statut** : première implémentation terminée ; le périmètre du solde et les années non disponibles restent explicitement limités.
 **Périmètre du prototype actuel** : le PLF 2027 local est simulé. Ses chiffres ne doivent pas être présentés comme des données officielles.
 
 ## Objectif
@@ -32,6 +32,17 @@ La présentation ne doit pas porter de jugement sur le niveau du déficit ou de 
 | Solde, intérêts et dette des APU (série de comparaison facultative) | année, indicateurs, unité (% du PIB et/ou euros), secteur institutionnel, définition, source | Comptes nationaux de l’INSEE ; statistiques de finances publiques d’Eurostat (déficit/excédent, dette, intérêts) | Bloc de comparaison distinct, avec périmètre APU clairement indiqué ; ne pas l’utiliser pour étayer directement une affirmation sur le seul budget de l’État. |
 
 Pour chaque fichier ou table retenu, consigner l’URL ou la référence bibliographique, la date de récupération, la version, l’unité, la couverture temporelle, la méthode, les éventuelles transformations et une empreinte du fichier source.
+
+## Résultat de la collecte et limite de périmètre
+
+- Archive AMECO de la Commission européenne, version 2026-06-02, récupérée et versionnée sous `sources/ameco0_csv.zip`. La série EDP du solde net de financement des APU couvre 1974–2024 : 1974 est à +0,0959 % du PIB et toutes les valeurs de 1975 à 2024 sont négatives. **Cette série n’est pas le solde du seul budget de l’État** ; l’interface le dit explicitement et n’étend pas l’affirmation à ce périmètre.
+- La série INSEE 001717255 fournit le solde exécuté du budget général de l’État à la fin de chaque année complète, de 2009 à 2025. Elle est intégrée en Md€ courants ; les comptes spéciaux ont une série séparée et 2026 n’est pas complet.
+- Les dépenses d’intérêts APU AMECO sont disponibles de 1978 à 2024 ; l’encours brut consolidé APU selon une série historique liée est disponible de 1977 à 2024.
+- Le rapport 2024 de la Cour des comptes, données AFT, fournit les amortissements et émissions MLT de l’État sur 2019–2024. Il publie les intérêts payés et la charge totale de dette pour 2023–2024 : en 2024, 46,5 Md€ d’intérêts payés, 49,3 Md€ de charge totale, 155,1 Md€ d’amortissement MLT dont 151,1 Md€ de nominal, et 285 Md€ d’émissions MLT nettes des rachats. Ces chiffres restent dans des colonnes séparées.
+- Les valeurs d’intérêts/charge totale pour 2019–2022 ne figurent pas dans la table curatée et demeurent manquantes. Le jeu de données détaillé de principal est donc limité à 2019–2024.
+- Le rafraîchissement est reproductible par `python3 scripts/refresh_finances_publiques.py`. L’intégration et les critères de qualité sont détaillés dans [ADR-006](adr/006-solde-et-dette.md).
+
+La série officielle du seul budget de l’État depuis 1974 reste à rechercher. La vue actuellement livrée répond au besoin historique sur les finances publiques au sens des APU, mais ne prétend pas démontrer une affirmation sur le budget de l’État seul.
 
 ## Modèle de données envisagé
 

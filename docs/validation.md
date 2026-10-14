@@ -1,6 +1,6 @@
 # Validation — tableau de bord budgétaire citoyen
 
-**Résultat : 81/81 contrôles headless PASS, 5/5 tests de données PASS, 5/5 tests unitaires PASS.** TypeScript/Vite et lint passent sans avertissement. État livré sur les branches de la feuille de route, intégration `feat/dashboard-citoyen`.
+**Résultat : 91/91 contrôles headless PASS, 11/11 tests de données PASS, 5/5 tests unitaires PASS.** TypeScript/Vite et lint passent sans avertissement. La validation de cette branche inclut les séries historiques solde/dette et leurs sources.
 
 Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vue initiale. Les défauts d’extraction signalés à l’époque sont corrigés, et les KPI utilisent désormais les totaux mission imprimés, pas la somme des programmes extraits.
 
@@ -9,6 +9,8 @@ Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vu
 ```bash
 cd sqlrooms-dashboard
 npm ci
+# Facultatif : récupérer les versions courantes des sources historiques
+npm run refresh:finance
 npm run prepare:data
 npm test
 npm run test:data
@@ -19,7 +21,7 @@ npm run test:headless
 python3 ../scripts/validate_headless.py --port 8928
 ```
 
-Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.18+, deux PDF locaux. Les données curatées sont versionnées sous `sources/`. Le build sert les sources PDF, les CSV et DuckDB sur la même origine.
+Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.18+, les deux PDF locaux du prototype et les sources curatées sous `sources/`. `npm run refresh:finance` rafraîchit AMECO, la série INSEE et le rapport de la Cour des comptes ; le build de publication sert les CSV et les trois PDF sur la même origine.
 
 ## Méthode
 
@@ -48,14 +50,15 @@ Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.1
 | Entrée | Titre citoyen, avertissement prévision/exécution, caractère fictif annoncé |
 | KPI | CP/AE 2026/2027, delta, 32 missions, premier poste, recherche et réinitialisation |
 | Accueil | Cinq postes, classement horizontal, calcul pour 100 €, graphiques masqués par défaut |
-| Tableaux | 32 lignes missions, total en pied, tri asc/desc et `aria-sort`, tri Entrée/Espace |
+| Tableaux | 32 lignes missions, total en pied, tri asc/desc et `aria-sort`, tri Entrée/Espace ; mise en évidence bleue neutre et appel au clic pour le poste dette |
 | Fiche mission | Investir 2030 et cinq programmes, total imprimé, part du budget complet, pages 309/310, focus, AE zéro |
 | Navigation | Entrée depuis tableau/treemap et clic comparatif avec libellé complet, retour Espace, focus restauré, recherche conservée, retour navigateur |
 | Expert | 32 cellules treemap, 28 barres comparatives, 668 faits bruts, réconciliation explicite |
 | Exports | Classement 64 lignes, programmes 10 lignes pour Investir, brut 668, contexte 6 et dérivé marqué, PLFSS 17 sans total |
 | Contexte | 43/54 Md€ distincts, année/unité/périmètre/source, indépendance des filtres |
+| Solde et dette | Solde APU AMECO 1974–2024 avec ligne zéro ; solde exécuté du budget général INSEE 2009–2025 ; intérêts APU à partir de 1978 ; encours à partir de 1977 affiché en Md ECU/EUR et en % du PIB sur deux graphiques côte à côte, utilisant la largeur disponible ; amortissements MLT État 2019–2024 et intérêts/charge 2023–2024 ; exports sourcés, périmètres explicités |
 | PLFSS | 17 mesures, 278,7 / 5,1 / −12,7 Md€, réserves non-additivité et ventilation non publiée |
-| Sources | Deux PDF réellement servis avec type MIME PDF et liens vers les pages |
+| Sources | Trois PDF réellement servis avec type MIME PDF ; sources AMECO, INSEE et AFT liées aux séries historiques |
 | Accessibilité | Cinq audits axe-core sans violation détectée, tabulation, focus visible, mobile 375 px sans débordement, zoom CSS émulé à 200 %, reduced-motion |
 | Robustesse | Absence de doublons, synchronisation des CSV, écart injecté visible sans changement des KPI, restauration du build |
 
@@ -65,20 +68,24 @@ Les graphiques Recharts sont chargés à la demande ; DuckDB et le dashboard son
 
 ## Sources utilisées
 
-Empreintes SHA-256 des PDF locaux testés :
+Empreintes SHA-256 des sources archivées :
 
 ```text
 PLF    132274b83bed4861a9e1a147d0d16abda2d729cdad2373ef804e26747c43d881
 PLFSS  71010873c0af8a776436e3c22628d3a1dc048ea406632afa2107dc83be7c598d
+AMECO  b460629037dfc994d805b3f236c80feb6c49bc86b3cde3f3cfc32027a08c3005
+INSEE  479d3f8e2c3b09e2767862a01e0ed38ad05f478343c409b8e953b8e3cd8304ed
+Cour   d2bc38c6b6977a10ce4d4d2690489b101ec54952409265cd9848ae09ab100ada
 ```
 
 ## Réserves et travaux externes
 
 - **Le PLF est fictif / simulé** (ADR-001). Aucun budget officiel réel ne peut être déduit de cette démonstration.
-- Les montants sont des crédits prévus, pas des dépenses exécutées ; euros courants, pas corrigés de l’inflation.
+- Les montants du PLF simulé sont des crédits prévus, pas des dépenses exécutées ; euros courants, pas corrigés de l’inflation. Les séries historiques sont distinctes et issues d’AMECO, de l’INSEE et du rapport de la Cour des comptes.
+- La série longue disponible porte sur le **solde des administrations publiques**, pas sur le seul budget de l’État ; elle ne suffit donc pas à prouver une affirmation sur le périmètre État depuis 1974. L’amortissement de principal documenté ici couvre 2019–2024 ; la source ne fournit intérêts et charge totale que pour 2023–2024.
 - La ventilation exacte PLF/PLFSS des 43 Md€ reste inconnue ; aucun total de mesures recoupées n’est calculé.
 - Axe-core ne contrôle qu’une partie des critères : **aucune certification RGAA/WCAG complète n’est revendiquée**. Audits lecteur d’écran, zoom navigateur natif et mobile réel à réaliser.
 - Tests citoyens **non réalisés** : [protocole](tests-utilisateurs-dashboard.md). L’objectif « moins d’une minute » n’est pas encore validé avec des personnes.
 - Build statique prêt ; **aucun déploiement distant effectué** faute de cible d’hébergement et de validation des droits des sources.
 
-Méthode et décisions : [méthodologie](methodologie-budget.md), [contrat](contrat-donnees.md), [ADR-005](adr/005-agregats-citoyens.md).
+Méthode et décisions : [méthodologie](methodologie-budget.md), [contrat](contrat-donnees.md), [ADR-005](adr/005-agregats-citoyens.md), [ADR-006](adr/006-solde-et-dette.md).

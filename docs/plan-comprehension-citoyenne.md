@@ -49,12 +49,14 @@ Les intitulés officiels des missions et programmes doivent rester inchangés da
 
 ## Principes de rédaction
 
+- Pour chaque bloc, expliquer à proximité ce que montre le chiffre, comment le lire et ce qu’il ne permet pas de conclure ; ne pas laisser un titre seul porter toute l’explication.
 - Employer un verbe ou une question quand cela aide la lecture : `Que finance ce domaine ?`, `Ce qui change par rapport à 2026`.
 - Développer un acronyme à sa première apparition dans chaque zone de lecture ; conserver l'acronyme entre parenthèses pour la précision.
 - Ne pas remplacer les libellés officiels des missions et programmes : ajouter une formulation explicative autour d'eux.
 - Éviter les promesses que les données ne permettent pas de vérifier : préférer `crédits prévus` à `dépenses` et `domaines financés` à `services rendus`.
-- Placer l'explication juste après le titre ou le contrôle concerné, plutôt que de renvoyer systématiquement au glossaire.
-- Réserver le vocabulaire technique détaillé à la vue experte, à la méthodologie et aux attributs d'aide accessibles.
+- Placer l'explication juste après le titre ou le contrôle concerné, plutôt que de renvoyer systématiquement au glossaire ; expliquer aussi les filtres et leur effet sur les chiffres affichés.
+- S’adresser directement à la personne qui lit : préciser ce qu’elle peut comparer ou découvrir en sélectionnant un domaine.
+- Réserver le vocabulaire technique détaillé à la vue experte et à la méthodologie, mais donner une explication simple dès sa première apparition dans la vue citoyenne.
 
 ## Découpage de mise en œuvre
 

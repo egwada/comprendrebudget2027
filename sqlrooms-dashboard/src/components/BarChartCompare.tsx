@@ -38,11 +38,12 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
 
   return (
     <div className="panel">
-      <h3>Budget voté en 2026 comparé au projet pour 2027, domaine par domaine</h3>
+      <h3>Comment les crédits de chaque domaine évoluent-ils entre 2026 et 2027 ?</h3>
       <p className="hint">
-        Top {data.length} en {creditType} 2027 (Md€). Barre claire : LFI 2026, le budget voté ·
-        barre foncée : PLF 2027, le projet de loi de finances. Cliquez sur un domaine pour le
-        détailler.
+        Comparaison des {data.length} domaines avec les montants les plus élevés pour les{' '}
+        {creditType === 'CP' ? 'paiements prévus' : 'engagements autorisés'} en 2027, en milliards
+        d’euros. Pour chaque domaine, la barre claire montre les crédits votés en 2026 et la barre
+        foncée le montant proposé pour 2027. Cliquez sur un domaine pour en voir le détail.
       </p>
       {chartData.length === 0 ? (
         <div className="empty">Aucune donnée à afficher.</div>
@@ -83,10 +84,10 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
                   <div className="tt">
                     <b>{it.mission}</b>
                     <div style={{ marginTop: 4 }}>
-                      Budget voté en 2026 (LFI) : <b>{fmtEUR(it['LFI 2026'] * 1e9)}</b>
+                      Crédits votés en 2026 : <b>{fmtEUR(it['LFI 2026'] * 1e9)}</b>
                     </div>
                     <div className="tt-muted">
-                      Prévu pour 2027 (PLF) : {fmtEUR(it['PLF 2027'] * 1e9)}
+                      Projeté pour 2027 : {fmtEUR(it['PLF 2027'] * 1e9)}
                     </div>
                   </div>
                 );
@@ -95,7 +96,7 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Bar
               dataKey="LFI 2026"
-              name="Voté en 2026 (LFI)"
+              name="Crédits votés en 2026"
               fill="#c5c5f2"
               radius={[0, 3, 3, 0]}
               barSize={11}
@@ -103,7 +104,7 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
             />
             <Bar
               dataKey="PLF 2027"
-              name="Prévu pour 2027 (PLF)"
+              name="Montant proposé pour 2027"
               fill="#000091"
               radius={[0, 3, 3, 0]}
               barSize={11}

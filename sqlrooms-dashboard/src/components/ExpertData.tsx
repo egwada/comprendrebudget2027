@@ -25,15 +25,16 @@ export default function ExpertData({ quality }: { quality: QualityRow[] }) {
   const gaps = quality.filter((q) => q.ecart !== 0);
   return (
     <div className="panel expert-data">
-      <h3>Qualité d’extraction et données brutes</h3>
+      <h3>Vérifier les chiffres et consulter les données sources</h3>
       <p className="hint">
-        À quoi cela sert : vérifier que les chiffres affichés dans la vue citoyenne proviennent bien
-        du document source, et inspecter les lignes extraites page par page.
+        Cette partie permet de retrouver les lignes relevées dans le document et de vérifier que
+        leur somme correspond au total publié pour chaque domaine. Elle s’adresse surtout aux
+        personnes qui souhaitent examiner le détail des calculs.
       </p>
       <p className="quality-summary">
         {gaps.length
-          ? `${gaps.length} écarts détectés entre totaux imprimés et programmes.`
-          : 'Aucun écart entre les totaux imprimés et les programmes pour le type de crédits choisi (2026 et 2027).'}
+          ? `${gaps.length} différences entre un total publié et la somme de ses programmes ont été repérées.`
+          : 'Pour le type de crédits choisi, les totaux publiés correspondent à la somme des programmes en 2026 et en 2027.'}
       </p>
       {gaps.length > 0 && (
         <ul>
@@ -47,9 +48,9 @@ export default function ExpertData({ quality }: { quality: QualityRow[] }) {
         </ul>
       )}
       <p>
-        Les cellules vides du récapitulatif valent zéro et sont marquées{' '}
-        <code>cellules_vides_zero</code>. Les CSV bruts contiennent aussi les lignes totaux : ne pas
-        additionner indistinctement les programmes et leurs totaux.
+        Dans le document, une case vide est traitée comme zéro et signalée dans les données brutes.
+        Les fichiers téléchargés contiennent les totaux des domaines et le détail des programmes :
+        ne les additionnez pas ensemble, car cela compterait certaines sommes deux fois.
       </p>
       {error && <p role="alert">Export indisponible : {error}</p>}
       <button
@@ -57,10 +58,10 @@ export default function ExpertData({ quality }: { quality: QualityRow[] }) {
         disabled={!raw.length}
         onClick={() => downloadCsv('credits-bruts.csv', raw)}
       >
-        Exporter les {raw.length} faits bruts en CSV (CP et AE, 2026 et 2027)
+        Télécharger les {raw.length} lignes de données en CSV (CP et AE, 2026 et 2027)
       </button>
       <details>
-        <summary>Voir les faits bruts et leurs sources</summary>
+        <summary>Voir les lignes de données relevées et leurs sources</summary>
         <div className="tbl-wrap" role="region" tabIndex={0} aria-label="Faits bruts">
           <table className="tbl">
             <caption>
@@ -88,7 +89,7 @@ export default function ExpertData({ quality }: { quality: QualityRow[] }) {
         </div>
       </details>
       <details>
-        <summary>SQL des agrégats et du contrôle qualité</summary>
+        <summary>Détails techniques des calculs (SQL)</summary>
         <pre>{`-- Agrégats mission : totaux imprimés exclusivement\nSELECT mission, annee, type_credit, SUM(montant) AS montant\nFROM fact_credits\nWHERE scope = 'budget_general' AND programme = '(total mission)'\nGROUP BY mission, annee, type_credit;\n\n-- Écart = total imprimé - somme des programmes\nSELECT * FROM v_qualite WHERE ecart != 0;`}</pre>
       </details>
     </div>

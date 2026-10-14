@@ -26,19 +26,19 @@ test('montants français et unité explicite', () => {
 
 test('évolution sans division par zéro et sans code couleur seul', () => {
   assert.equal(evolutionPct(0, 1), null);
-  assert.equal(evolutionLabel(0, 1), 'Nouveau en 2027 — pas de crédits votés en 2026');
-  assert.equal(evolutionLabel(0, 0), 'Sans crédits');
+  assert.equal(evolutionLabel(0, 1), 'Crédits prévus en 2027, aucun crédit voté en 2026');
+  assert.equal(evolutionLabel(0, 0), 'Aucun crédit en 2026 ni en 2027');
   assert.equal(
     evolutionLabel(100, 110),
-    '↑ Hausse de 10,0 % par rapport à 2026'
+    '↑ Crédits en hausse de 10,0 % par rapport aux crédits votés en 2026'
   );
   assert.equal(
     evolutionLabel(100, 90),
-    '↓ Baisse de 10,0 % par rapport à 2026'
+    '↓ Crédits en baisse de 10,0 % par rapport aux crédits votés en 2026'
   );
   assert.equal(
     evolutionLabel(100, 100),
-    '→ Stable par rapport à 2026 (0 %)'
+    '→ Montant inchangé par rapport aux crédits votés en 2026 (0 %)'
   );
   // Le libellé explicite ne dépend ni de la couleur ni du symbole seul.
   for (const label of [
@@ -49,11 +49,11 @@ test('évolution sans division par zéro et sans code couleur seul', () => {
   ]) {
     assert.ok(label.includes('2026'), label);
   }
-  assert.equal(evolutionPhrase(100, 110), 'hausse par rapport au budget voté en 2026');
-  assert.equal(evolutionPhrase(100, 90), 'baisse par rapport au budget voté en 2026');
+  assert.equal(evolutionPhrase(100, 110), 'hausse des crédits par rapport à ceux votés en 2026');
+  assert.equal(evolutionPhrase(100, 90), 'baisse des crédits par rapport à ceux votés en 2026');
   assert.equal(
     evolutionPhrase(0, 1),
-    'domaine nouveau en 2027, sans crédits votés en 2026'
+    'aucun crédit voté en 2026 pour ce domaine'
   );
 });
 

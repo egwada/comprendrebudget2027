@@ -25,7 +25,7 @@ const Cell = (props: any) => {
       className="tm-cell"
       role="button"
       tabIndex={0}
-      aria-label={`${name} : ${fmtEUR(amount)}. Voir les programmes de ce domaine`}
+      aria-label={`${name} : ${fmtEUR(amount)} de crédits prévus. Voir les actions financées dans ce domaine.`}
       onClick={() => props?.onSelect?.(name)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -67,10 +67,11 @@ export default function TreemapChart({ data, total, onSelect }: Props) {
 
   return (
     <div className="panel">
-      <h3>Où va l’argent : la carte des crédits</h3>
+      <h3>Quels domaines représentent la plus grande part du budget ?</h3>
       <p className="hint">
-        Chaque rectangle est une mission, c’est-à-dire un domaine d’action de l’État, dessiné à
-        l’échelle de ses crédits prévus en 2027. Cliquez pour voir ses programmes.
+        Chaque rectangle représente un domaine : plus il est grand, plus le montant de crédits
+        prévu pour 2027 est élevé. Un domaine est appelé « mission » dans le budget. Sélectionnez un
+        rectangle pour découvrir les actions financées dans ce domaine.
       </p>
       {chartData.length === 0 ? (
         <div className="empty">Aucune mission ne correspond à la recherche.</div>
@@ -94,10 +95,10 @@ export default function TreemapChart({ data, total, onSelect }: Props) {
                   <div className="tt">
                     <b>{c.mission}</b>
                     <div style={{ marginTop: 4 }}>
-                      Crédits 2027 : <b>{fmtEUR(c.y2027)}</b>
+                      Crédits prévus pour 2027 : <b>{fmtEUR(c.y2027)}</b>
                     </div>
                     <div className="tt-muted">
-                      {fmtPct(c.share, 1)} du total · Budget voté 2026 : {fmtEUR(c.y2026)}
+                      {fmtPct(c.share, 1)} des crédits affichés · votés en 2026 : {fmtEUR(c.y2026)}
                     </div>
                   </div>
                 );

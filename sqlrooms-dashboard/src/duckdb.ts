@@ -68,6 +68,22 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
   );
   console.log('[DUCKDB] PLFSS mesures table created');
 
+  for (const [table, file] of [
+    ['fact_solde_apu', 'fact_solde_apu.csv'],
+    ['fact_solde_budget_general_etat', 'fact_solde_budget_general_etat.csv'],
+    ['fact_interets_apu', 'fact_interets_apu.csv'],
+    ['fact_encours_dette_apu', 'fact_encours_dette_apu.csv'],
+    ['fact_financement_dette_etat', 'fact_financement_dette_etat.csv'],
+  ]) {
+    const text = await fetch(`/data/${file}`).then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/${file}`);
+      return r.text();
+    });
+    await db.registerFileText(file, text);
+    await c.query(`CREATE OR REPLACE TABLE ${table} AS FROM read_csv_auto('${file}')`);
+  }
+  console.log('[DUCKDB] Séries officielles solde/dette chargées');
+
   await c.query(`
     CREATE OR REPLACE VIEW v_missions_cp_2027 AS
     SELECT mission, SUM(montant) as total

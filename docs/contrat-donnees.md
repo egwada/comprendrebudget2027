@@ -26,6 +26,11 @@ Les cellules vides du tableau correspondent à l’absence de crédits dans l’
 
 - `dim_contexte` : chiffres curatés avec année, unité, périmètre, page, note. Nature documentée par clé : efforts/mesures = `mesures_redressement`, PDE = `objectif_depense`, déficit = `solde_public`, dette = `dette_publique`. Le solde 54 − 43 est explicitement dérivé.
 - `fact_mesures_plfss` : `effet` distingue économies, recettes, dépenses, transfert, objectif et solde. `montant_md` en Md€, année par ligne. Source : `plfss_2027_texte.pdf`. Mesures non additives.
-- Exécution budgétaire : aucune donnée présente ; ne pas assimiler aux crédits prévus.
+- Exécution des crédits PLF simulés : aucune série générale n’est présente ; ne pas assimiler ces crédits prévus à des dépenses exécutées.
+- `fact_solde_apu` : solde net de financement des administrations publiques au sens EDP, AMECO, observations 1974–2024. Il ne représente pas le seul budget de l’État.
+- `fact_solde_budget_general_etat` : solde exécuté du budget général de l’État, série mensuelle INSEE 001717255 ramenée à l’observation de décembre (cumul annuel), 2009–2025. Les comptes spéciaux sont publiés par une série distincte et 2026 reste incomplet.
+- `fact_interets_apu` : dépenses d’intérêts des APU selon AMECO, premières observations disponibles en 1978. Une année absente reste absente, jamais convertie en zéro.
+- `fact_encours_dette_apu` : encours consolidé brut des APU, série historique liée AMECO à partir de 1977. Il s’agit d’un stock, pas d’un remboursement annuel.
+- `fact_financement_dette_etat` : exécution du tableau de financement AFT 2019–2024, curatée depuis le rapport de la Cour des comptes 2024. Principal amorti, intérêts, charge totale et émissions restent des catégories séparées. Les intérêts et la charge totale sont manquants pour 2019–2022 dans cette source.
 
-Les fichiers curatés sont versionnés sous `sources/`. `data/` et `public/data/` sont reconstruits par `scripts/prepare_dashboard.py`. Les PDF locaux ne sont pas versionnés. Source de démonstration, non officielle (ADR-001).
+AMECO est archivée dans `sources/ameco0_csv.zip` ; les séries curatées et leurs codes/version source sont sous `sources/`. Le rapport officiel de la Cour est archivé sous `sources/neb-2024-gestion-dette-tresorerie-etat.pdf`. `scripts/refresh_finances_publiques.py` rafraîchit ces sources ; `scripts/prepare_dashboard.py` les copie vers `data/staging/` et `public/data/` sans téléchargement. Les définitions et réserves sont détaillées dans [ADR-006](adr/006-solde-et-dette.md). Le PLF 2027 reste une source de démonstration simulée (ADR-001).

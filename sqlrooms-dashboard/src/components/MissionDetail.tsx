@@ -42,11 +42,12 @@ export default function MissionDetail({
         {mission.mission}
       </h2>
       <p>
-        {sectionLabels.detail.intro} Ici, les principales actions financées sont{' '}
+        {sectionLabels.detail.intro} Les programmes qui représentent les montants les plus élevés
+        ici sont{' '}
         {ranked
           .slice(0, 3)
           .map((p) => p.mission)
-          .join(' ; ') || 'les programmes ci-dessous'}
+          .join(' ; ') || 'ceux détaillés ci-dessous'}
         . {sectionLabels.detail.reserve}
       </p>
       <dl className="mission-facts">
@@ -77,7 +78,8 @@ export default function MissionDetail({
         </div>
       </dl>
       <p>
-        Source : PLF 2027 de démonstration · budget général · euros ·{' '}
+        Ces montants sont repris du document de démonstration, pages indiquées ci-dessous. Ils
+        décrivent des crédits prévus, pas des dépenses déjà réalisées.{' '}
         {mission.source_pages?.split(', ').map((p, i) => (
           <span key={p}>
             {i > 0 ? ', ' : ''}
@@ -86,15 +88,15 @@ export default function MissionDetail({
             </a>
           </span>
         ))}
-        . Le total imprimé de la mission fait référence.
+        . Pour le montant principal, le total publié dans le document fait référence.
       </p>
       {quality
         .filter((q) => q.ecart !== 0)
         .map((q) => (
           <p className="mes-warning quality-alert" key={q.annee}>
-            Qualité d’extraction {q.annee} : écart de {q.ecart < 0 ? '−' : '+'}
-            {fmtEUR(Math.abs(q.ecart))} entre le total mission et les programmes extraits. Le détail
-            peut être incomplet ; le total imprimé reste utilisé.
+            Pour {q.annee}, le total indiqué dans le document diffère de {q.ecart < 0 ? '−' : '+'}
+            {fmtEUR(Math.abs(q.ecart))} de la somme des programmes affichés. Le détail peut être
+            incomplet ; le montant principal reprend le total du document.
           </p>
         ))}
       <p>{sectionLabels.detail.programsIntro}</p>

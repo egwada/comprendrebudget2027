@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { query } from '../duckdb';
 import MesuresPLFSS from './MesuresPLFSS';
+import SoldeEtDette from './SoldeEtDette';
 import { downloadCsv } from '../lib/csv';
 import { contextLabels } from '../lib/labels';
 
@@ -48,8 +49,8 @@ export default function BudgetContext() {
       <p className="note">
         <b>{contextLabels.notAdditive}</b>
       </p>
-      {error && <p role="alert">Contexte indisponible : {error}</p>}
-      <h3>Les chiffres du rapport général</h3>
+      {error && <p role="alert">Ces repères ne sont pas disponibles pour le moment : {error}</p>}
+      <h3>Autres repères sur les finances publiques</h3>
       <div className="ctx-grid">
         {rows.map((r) => (
           <article className="ctx-card" key={r.cle}>
@@ -65,7 +66,7 @@ export default function BudgetContext() {
                 target="_blank"
                 rel="noreferrer"
               >
-                source p. {r.source_page} (PLF, nouvel onglet)
+                Voir la source, page {r.source_page} (nouvel onglet)
               </a>
               {r.note && <em> — {r.note}</em>}
             </p>
@@ -86,13 +87,14 @@ export default function BudgetContext() {
           )
         }
       >
-        Exporter les chiffres de contexte en CSV
+        Télécharger ces repères avec leurs sources (CSV)
       </button>
       <section aria-labelledby="plfss-title">
         <h3 id="plfss-title">{contextLabels.plfssTitle}</h3>
         <p className="hint">{contextLabels.plfssExplanation}</p>
         <MesuresPLFSS />
       </section>
+      <SoldeEtDette />
     </section>
   );
 }

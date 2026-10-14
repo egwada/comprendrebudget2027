@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { MissionRow } from './Dashboard';
 import { fmtEUR, evolutionLabel, evolutionPct } from '../lib/format';
-import { columnLabels } from '../lib/labels';
+import { columnLabels, debtDetailCue, debtMissionName } from '../lib/labels';
 
 interface Props {
   data: MissionRow[];
@@ -61,9 +61,9 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
     >
       <table className="tbl">
         <caption>
-          Crédits prévus par {kind === 'missions' ? 'domaine d’action (mission officielle)' : 'programme'} —
-          montants en euros (Md€ : milliards ; M€ : millions). La part porte sur{' '}
-          {kind === 'missions' ? 'le total affiché' : 'le total imprimé de la mission'}.
+          Montants prévus en euros par {kind === 'missions' ? 'domaine (appelé « mission » dans le budget)' : 'programme'}.
+          Md€ signifie milliards d’euros et M€ millions d’euros. La part indique la proportion des crédits affichés{' '}
+          {kind === 'missions' ? 'dans le tableau' : 'au sein de cette mission'} ; l’évolution compare les montants de 2027 à ceux votés en 2026.
         </caption>
         <thead>
           <tr>
@@ -84,15 +84,18 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.mission}>
+            <tr key={r.mission} className={kind === 'missions' && r.mission === debtMissionName ? 'debt-focus-row' : undefined}>
               <th scope="row" className="name-cell">
                 {onSelect ? (
                   <button
                     id={`table-${r.mission}`}
-                    className="mission-link"
+                    className={`mission-link ${kind === 'missions' && r.mission === debtMissionName ? 'debt-focus-link' : ''}`}
                     onClick={() => onSelect(r.mission)}
                   >
                     {r.mission}
+                    {kind === 'missions' && r.mission === debtMissionName && (
+                      <span className="debt-cue">{debtDetailCue}</span>
+                    )}
                   </button>
                 ) : (
                   r.mission
@@ -127,7 +130,7 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
         {kind === 'missions' && rows.length > 0 && (
           <tfoot>
             <tr>
-              <th scope="row">Total ({rows.length} missions — domaines d’action)</th>
+              <th scope="row">Total des {rows.length} domaines affichés</th>
               <td className="num">{fmtEUR(total26)}</td>
               <td className="num">
                 <b>{fmtEUR(total27)}</b>

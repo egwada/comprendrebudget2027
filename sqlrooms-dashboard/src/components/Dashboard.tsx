@@ -12,6 +12,8 @@ import {
   kpiLabels,
   kpiSubLabels,
   sectionLabels,
+  debtMissionName,
+  debtDetailCue,
 } from '../lib/labels';
 import '../styles.css';
 
@@ -206,7 +208,7 @@ export default function Dashboard() {
           />
         </label>
         <button className="reset-btn" onClick={reset}>
-          Réinitialiser
+          Rétablir l’affichage initial
         </button>
         <button
           className="expert-toggle"
@@ -224,14 +226,13 @@ export default function Dashboard() {
       <main id="contenu" tabIndex={-1}>
         <p className="note">{sectionLabels.note}</p>
         <p className="hint">
-          Périmètre : budget général de l’État, remboursements et dégrèvements compris ·{' '}
-          {creditLabels.help} · montants en euros · source : PDF de démonstration PLF 2027,
-          p. 307–313.{' '}
-          {search && 'Tous les totaux et parts ci-dessous portent sur les domaines filtrés.'}
+          Les chiffres couvrent le budget général de l’État, remboursements et dégrèvements d’impôts compris.{' '}
+          {creditLabels.help} Les montants sont en euros ; les sources sont indiquées au bas des tableaux.{' '}
+          {search && 'La recherche limite les domaines inclus dans les totaux et les pourcentages.'}
         </p>
         {error && <p role="alert">Impossible de charger les données : {error}</p>}
         <div role="status" aria-live="polite" className="sr-only">
-          {loading ? 'Chargement' : `${sorted.length} domaines d’action affichés, ${creditLabels.acronym}`}
+          {loading ? 'Chargement' : `${sorted.length} domaines affichés — ${creditLabels.button}`}
         </div>
         {loading ? (
           <p className="loading">Chargement des données budgétaires…</p>
@@ -277,23 +278,24 @@ export default function Dashboard() {
                     {sectionLabels.top5.title}
                   </h2>
                   <p className="takeaway">
-                    <b>{sectionLabels.top5.takeIntro}</b> ces cinq domaines représentent{' '}
+                    <b>{sectionLabels.top5.takeIntro}</b> ensemble, ces cinq domaines représentent{' '}
                     {topShare.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % des crédits{' '}
-                    {search ? 'filtrés' : 'du budget général'} en {creditType} 2027.{' '}
+                    {search ? 'des domaines affichés' : 'du budget général'} pour 2027.{' '}
                     {largestGains.length > 0 && (
                       <>
-                        Les hausses en euros les plus importantes concernent{' '}
+                        Les écarts à la hausse les plus importants, en euros, concernent{' '}
                         {largestGains.map((r) => r.mission).join(' et ')}.{' '}
                       </>
                     )}
-                    Les remboursements d’impôts ne sont pas des services publics directement
-                    financés.
+                    Dans le budget général complet, une partie des crédits correspond à des
+                    remboursements et dégrèvements d’impôts, et non au financement direct de services
+                    publics.
                   </p>
                   <div className="top5">
                     {top.map((r, i) => (
                       <button
                         id={`top-${r.mission}`}
-                        className="mcard"
+                        className={`mcard ${r.mission === debtMissionName ? 'debt-focus-card' : ''}`}
                         key={r.mission}
                         onClick={() => selectMission(r.mission)}
                       >
@@ -301,6 +303,7 @@ export default function Dashboard() {
                         <span className="name">{r.mission}</span>
                         <span className="val">{fmtEUR(r.y2027)}</span>
                         <span className="sub">{evolutionLabel(r.y2026, r.y2027)}</span>
+                        {r.mission === debtMissionName && <span className="debt-cue">{debtDetailCue}</span>}
                       </button>
                     ))}
                   </div>
@@ -311,11 +314,10 @@ export default function Dashboard() {
                 <section className="panel" aria-labelledby="hundred-title">
                   <h2 id="hundred-title">{sectionLabels.hundred.title}</h2>
                   <p>
-                    Répartition des crédits prévus en 2027 du budget général{' '}
-                    {search
-                      ? 'sur les domaines filtrés'
-                      : '(remboursements d’impôts inclus)'}
-                    . {sectionLabels.hundred.note}
+                    Pour rendre les proportions plus faciles à comparer, imaginez que les crédits
+                    affichés pour 2027 soient ramenés à 100 €. Voici combien correspondrait à chaque
+                    domaine{search ? ' parmi ceux trouvés par votre recherche' : ''}.{' '}
+                    {sectionLabels.hundred.note}
                   </p>
                   <ul className="hundred">
                     {top.map((r) => (
@@ -345,15 +347,15 @@ export default function Dashboard() {
                     {sectionLabels.ranking.title} — {creditType} 2027
                   </h2>
                   <p>
-                    Chaque ligne compare un montant au plus grand domaine.
-                    {' '}
-                    {sectionLabels.ranking.explanation} La part porte sur le total affiché ; la
-                    comparaison porte sur le budget voté en 2026 (LFI) et le projet pour 2027 (PLF).
-                    Source : récapitulatif p. 307–313.
+                    Chaque ligne correspond à un domaine et indique les crédits prévus pour 2027.
+                    La longueur de la barre permet de comparer les montants : la plus longue
+                    correspond au domaine avec le montant le plus élevé. Le pourcentage indique sa
+                    part du total affiché. {sectionLabels.ranking.explanation} Cliquez sur un domaine
+                    pour voir les actions financées et comparer avec les crédits votés en 2026.
                   </p>
                   <ol className="horizontal-ranking">
                     {sorted.map((r) => (
-                      <li key={r.mission}>
+                      <li key={r.mission} className={r.mission === debtMissionName ? 'debt-focus-item' : undefined}>
                         <button
                           id={`ranking-${r.mission}`}
                           onClick={() => selectMission(r.mission)}
@@ -373,6 +375,7 @@ export default function Dashboard() {
                             })}{' '}
                             % du total · {evolutionLabel(r.y2026, r.y2027)}
                           </span>
+                          {r.mission === debtMissionName && <span className="debt-cue">{debtDetailCue}</span>}
                         </button>
                       </li>
                     ))}
@@ -401,9 +404,9 @@ export default function Dashboard() {
                     </h2>
                     <p>{sectionLabels.expert.explanation}</p>
                     <p>
-                      Carte : surfaces proportionnelles aux crédits prévus en 2027. Comparatif : les
-                      quatorze premiers domaines, budget voté 2026 face au projet pour 2027.
-                      Alternative complète : le tableau de classement ci-dessus.
+                      La taille de chaque rectangle représente le montant prévu pour le domaine en
+                      2027. Le graphique compare les 14 montants les plus élevés avec ceux votés en
+                      2026. Le tableau ci-dessus contient la liste complète.
                     </p>
                     <Suspense fallback={<p role="status">Chargement des graphiques…</p>}>
                       <div className="grid-2">
@@ -442,18 +445,19 @@ export default function Dashboard() {
             {!selected && <BudgetContext />}
             {!selected && quality.some((q) => q.ecart !== 0) && (
               <p className="mes-warning quality-alert">
-                Des écarts entre totaux mission et programmes sont détectés pour {creditType}. Les
-                KPI utilisent les totaux imprimés ; consulter la vue experte pour les écarts
-                détaillés.
+                Pour certains domaines, la somme des programmes ne correspond pas au total indiqué
+                dans le document source ({creditType}). Le chiffre principal reste celui imprimé
+                dans le document ; ouvrez les données détaillées pour voir les écarts.
               </p>
             )}
           </>
         )}
       </main>
       <footer className="src">
-        Prototype non officiel : le PDF PLF 2027 est un document fictif / simulé (ADR-001). Ces
-        données ne constituent pas une annonce gouvernementale. Sources : récapitulatif des missions
-        et programmes, pages 307–313.
+        Démonstration non officielle : le document présenté comme le PLF 2027 est fictif / simulé.
+        Ces chiffres ne décrivent pas le budget réel de l’État et ne constituent pas une annonce du
+        gouvernement. Source des crédits affichés : récapitulatif des domaines et programmes,
+        pages 307–313.
       </footer>
     </div>
   );

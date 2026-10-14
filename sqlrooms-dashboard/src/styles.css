@@ -7,10 +7,6 @@
   --text: #161616;
   --muted: #525260;
   --border: #e4e4ea;
-  --red: #e1000f;
-  --red-bg: #fdecec;
-  --green: #18753c;
-  --green-bg: #e3f5e8;
   --shadow: 0 1px 3px rgba(10, 10, 40, 0.09);
   --radius: 12px;
 }
@@ -186,6 +182,54 @@ body {
 .ctx-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
 .ctx-card .sub em { font-style: normal; color: var(--muted); }
 
+/* ---- Solde public et dette : séries officielles distinctes ---- */
+.debt-balance { margin-top: 24px; }
+.debt-balance > section { margin-top: 24px; }
+.debt-balance h3 { margin: 18px 0 4px; font-size: 16px; }
+.finance-finding {
+  margin: 14px 0;
+  padding: 12px 15px;
+  border-left: 4px solid var(--blue);
+  border-radius: 7px;
+  background: #f1f1f8;
+  line-height: 1.55;
+}
+.finance-chart { width: 100%; min-width: 0; margin: 10px 0; }
+.finance-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+.finance-chart-panel {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fafaff;
+}
+.finance-chart-panel h3 { margin: 0; }
+.finance-debt-panel { grid-column: 1 / -1; }
+.finance-debt-chart-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.finance-debt-chart { min-width: 0; }
+.finance-debt-chart h4 { margin: 10px 0 0; font-size: 13px; }
+.finance-source {
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.finance-data-table { margin: 12px 0; }
+.finance-data-table summary { cursor: pointer; color: var(--blue); font-size: 12.5px; font-weight: 700; }
+.finance-data-table summary:focus-visible { outline: 3px solid #ffdd00; outline-offset: 3px; }
+.finance-data-table .tbl-wrap { max-height: 340px; margin-top: 8px; }
+.finance-financing-table { min-width: 850px; }
+
 /* ---- Top postes ---- */
 .section-title {
   font-size: 13px;
@@ -233,6 +277,23 @@ body {
 }
 .mcard .val { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
 .mcard .sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.mcard.debt-focus-card { background: #f5f5ff; border-color: #b7b7ff; }
+.mcard .debt-cue { display: inline-flex; margin-top: 5px; }
+.debt-cue {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid #b7b7ff;
+  border-radius: 999px;
+  background: #eef1fb;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.horizontal-ranking .debt-focus-item > button { background: #f5f5ff; border-color: #b7b7ff; }
+.horizontal-ranking .debt-focus-item .debt-cue { grid-column: 1 / -1; }
 
 /* ---- Panneaux graphiques ---- */
 .grid-2 {
@@ -303,10 +364,10 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
   font-size: 11.5px;
   font-weight: 700;
   white-space: nowrap;
+  /* Une variation budgétaire décrit un sens, pas un résultat positif ou négatif. */
+  color: var(--muted);
+  background: #eeeef2;
 }
-.badge.up { color: #b0000c; background: var(--red-bg); }
-.badge.down { color: #0e6231; background: var(--green-bg); }
-.badge.zero { color: var(--muted); background: #eeeef2; }
 
 .sharebar {
   display: inline-block;
@@ -422,6 +483,16 @@ p { line-height: 1.6; }
 .tbl tbody th { text-transform: none; letter-spacing: normal; font-size: 13px; white-space: normal; text-align: left; }
 .tbl .sort-btn { border: 0; padding: 6px; background: transparent; color: var(--blue); font-weight: 700; }
 .mission-link { border: 0; background: transparent; text-align: left; color: var(--blue); text-decoration: underline; padding: 4px; }
+.debt-focus-row > th, .debt-focus-row > td { background: #f5f5ff; }
+.debt-focus-row > th:first-child { box-shadow: inset 4px 0 0 var(--blue); }
+.mission-link.debt-focus-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  text-decoration: none;
+}
+.mission-link.debt-focus-link:hover { text-decoration: underline; }
 .tbl tfoot td, .tbl tfoot th { background: #f6f6fa; padding: 12px; font-weight: 700; }
 main > .panel { margin-top: 18px; }
 .glossary { display: grid; gap: 18px; }
@@ -445,7 +516,7 @@ pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap;
   .toolbar > *, .seg { width: 100%; }
   .seg { flex-wrap: wrap; }
   .seg button { flex: 1; }
-  .kpis, .top5, .ctx-grid { grid-template-columns: 1fr; }
+  .kpis, .top5, .ctx-grid, .finance-debt-chart-pair { grid-template-columns: 1fr; }
   .horizontal-ranking button { grid-template-columns: 1fr; }
   .panel { padding: 14px; }
   .panel-head { flex-wrap: wrap; }

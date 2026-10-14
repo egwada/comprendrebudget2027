@@ -13,11 +13,11 @@ export interface MesureRow {
   note: string;
 }
 
-/** Libellés FR + classes de badge par nature de la mesure (sémantique finances publiques). */
+/** Libellés FR + classes décrivant la nature/sens de la mesure, sans code couleur évaluatif. */
 const EFFET: Record<string, { label: string; cls: string }> = {
-  economie: { label: 'économies', cls: 'down' }, // vert : baisse des dépenses
-  recette: { label: 'recettes nouvelles', cls: 'down' }, // vert : amélioration du solde
-  depense: { label: 'dépense en plus', cls: 'up' }, // rouge : hausse des dépenses
+  economie: { label: 'économies', cls: 'down' },
+  recette: { label: 'recettes nouvelles', cls: 'down' },
+  depense: { label: 'dépense en plus', cls: 'up' },
   transfert: { label: 'transfert de dette', cls: 'zero' },
   objectif: { label: 'objectif', cls: 'zero' },
   solde: { label: 'solde', cls: 'zero' }, // classe ajustée selon le signe
@@ -59,19 +59,24 @@ export default function MesuresPLFSS() {
   return (
     <div className="panel">
       <div className="panel-head">
-        <h3>Détail des mesures, branche par branche (PLFSS 2027)</h3>
+        <h3>Des exemples de mesures pour la Sécurité sociale, par branche</h3>
       </div>
       <p className="hint">
-        Mesures documentées sur le périmètre sécurité sociale, branche par branche. Le PLFSS est un
-        texte distinct du budget général de l’État. Elles ne constituent pas une ventilation
-        chiffrée des 43 Md€. Ventilation exacte PLF / PLFSS <b>non publiée</b> à ce stade —
-        chiffres curation page par page depuis le texte soumis au Conseil des ministres
+        Le PLFSS (projet de loi de financement de la Sécurité sociale) est distinct du budget de
+        l’État. Chaque ligne décrit une mesure et son montant tel qu’il est présenté dans le
+        document ; une mesure peut concerner une année différente de 2027. Ces exemples ne
+        détaillent pas les 43 Md€ : la répartition précise entre l’État et la Sécurité sociale n’est
+        pas publiée. Les données ont été relevées dans le texte soumis au Conseil des ministres
         (NOR CPPX2620963L/Bleue-1).
       </p>
-      <button className="plfss-export export-btn" onClick={() => downloadCsv('mesures-plfss.csv', rows.map((r) => ({ ...r, scope: 'securite_sociale', unite: 'Md€', source_document: 'plfss_2027_texte.pdf', qualite_extraction: 'curation_sourcee_non_additive' })))}>Exporter les mesures documentées en CSV (sans total)</button>
+      <p className="hint">
+        Les mesures peuvent se recouper : additionner les lignes donnerait un total trompeur. Les
+        montants ne représentent pas tous la même chose : économies, recettes ou dépenses en plus.
+      </p>
+      <button className="plfss-export export-btn" onClick={() => downloadCsv('mesures-plfss.csv', rows.map((r) => ({ ...r, scope: 'securite_sociale', unite: 'Md€', source_document: 'plfss_2027_texte.pdf', qualite_extraction: 'curation_sourcee_non_additive' })))}>Télécharger les mesures et leurs sources (CSV, sans total)</button>
       <div className="tbl-wrap" role="region" tabIndex={0} aria-label="Mesures PLFSS, défilement horizontal possible">
         <table className="tbl plfss-table">
-          <caption>Mesures PLFSS — montants en Md€, années indiquées par ligne, périmètre sécurité sociale. Ces mesures ne doivent pas être additionnées entre elles.</caption>
+          <caption>Mesures du projet de budget de la Sécurité sociale. Les montants sont en Md€ ; l’année et la page source sont indiquées pour chaque mesure. Ne pas additionner les lignes : elles peuvent se recouper.</caption>
           <thead>
             <tr>
               <th>Branche</th>
@@ -109,11 +114,13 @@ export default function MesuresPLFSS() {
         </table>
       </div>
       <p className="mes-warning">
-        ⚠︎ Les lignes se recoupent (montée en charge des mesures 2026, montants encaissés vs
-        rendement…) : <b>ne pas additionner</b>. Repères publiés : solde des régimes de base{' '}
-        <b>−12,7 Md€</b> en 2027, soit <b>+9,1 Md€ d’amélioration</b> vs 2026, dont ~{' '}
-        <b>9 Md€</b> de rendement des mesures sur les dépenses et <b>plus de 6 Md€</b> de recettes
-        nouvelles (plus ~3 Md€ de reprise en base des mesures 2026).
+        <b>Pourquoi ne pas additionner ces lignes ?</b> Certaines mesures se prolongent d’une année
+        à l’autre, et les montants peuvent décrire des effets différents. À titre de repère, le
+        document prévoit un solde de <b>−12,7 Md€</b> pour les régimes de base en 2027, soit une
+        amélioration annoncée de <b>9,1 Md€</b> par rapport à 2026. Il mentionne aussi environ{' '}
+        <b>9 Md€</b> de rendement des mesures sur les dépenses, plus de <b>6 Md€</b> de recettes
+        nouvelles et environ <b>3 Md€</b> liés aux mesures prises en 2026. Ces repères ne s’ajoutent
+        pas mécaniquement : ils peuvent porter sur des effets différents.
       </p>
     </div>
   );
