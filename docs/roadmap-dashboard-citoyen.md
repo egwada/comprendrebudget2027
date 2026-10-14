@@ -440,7 +440,7 @@ Questions de validation :
 
 ## Prochaine tâche recommandée
 
-Réaliser les tests citoyens selon `docs/tests-utilisateurs-dashboard.md`, puis l’audit manuel d’accessibilité et choisir un hébergement. Le prototype et le build statique sont prêts localement ; aucun budget officiel ni déploiement public n’est prétendu.
+Mettre en œuvre le plan de compréhension citoyenne (`docs/plan-comprehension-citoyenne.md`) sur la branche `feat/citoyen-05-comprehension-intitules`, puis réaliser les tests citoyens selon `docs/tests-utilisateurs-dashboard.md`. L’audit manuel d’accessibilité et le choix d’un hébergement restent à faire. Le prototype et le build statique sont prêts localement ; aucun budget officiel ni déploiement public n’est prétendu.
 
 ## Suivi de l’implémentation
 
@@ -450,7 +450,8 @@ Branches successives (empilées, la dernière contient les précédentes) :
 2. `feat/citoyen-02-fiches-missions` : fiches, programmes, sources, navigation/focus et exports ;
 3. `feat/citoyen-03-perimetres-methodologie` : contexte 43/54, PLFSS non additif et page méthodologie ;
 4. `feat/citoyen-04-accessibilite-publication` : axe-core, contraste, mobile, zoom, performance, tests et build de publication ;
-5. `feat/dashboard-citoyen` : branche d’intégration finale.
+5. `feat/dashboard-citoyen` : branche d’intégration finale ;
+6. `feat/citoyen-05-comprehension-intitules` : plan de reformulation des intitulés et validation de la compréhension citoyenne.
 
 | Tâches | État |
 |---|---|
