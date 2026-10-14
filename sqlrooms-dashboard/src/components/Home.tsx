@@ -143,7 +143,7 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
       <h2 className="section-title">Aperçu des finances publiques</h2>
       <p className="home-intro">
         Chaque repère ci-dessous mène aux données détaillées. Les chiffres de 2027 proviennent d’un
-        document fictif simulé ; les séries historiques sont des exécutions observées.
+        document de l’Assemblée nationale ; les séries historiques sont des exécutions observées.
       </p>
       <div className="home-grid">
         {kpis.map((kpi) => (
