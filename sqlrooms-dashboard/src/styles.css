@@ -83,6 +83,32 @@ body {
   transition: background 0.15s;
 }
 .seg button.on { background: var(--blue); color: #fff; }
+.seg-acro {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  opacity: 0.75;
+}
+.acro-help {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+}
+.acro-help b { color: var(--blue); }
+.detail-kicker {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0 0 4px;
+}
 .search-input input {
   padding: 8px 13px;
   border-radius: 8px;

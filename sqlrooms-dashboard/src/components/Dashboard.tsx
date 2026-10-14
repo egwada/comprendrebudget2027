@@ -5,7 +5,14 @@ import MissionDetail, { type QualityRow } from './MissionDetail';
 import ExpertData from './ExpertData';
 import BudgetContext from './BudgetContext';
 import { exportCredits } from '../lib/csv';
-import { fmtEUR, fmtPct, evolutionPct, evolutionLabel } from '../lib/format';
+import { fmtEUR, fmtPct, evolutionPct, evolutionLabel, evolutionPhrase } from '../lib/format';
+import {
+  creditTypeLabels,
+  acronymHelp,
+  kpiLabels,
+  kpiSubLabels,
+  sectionLabels,
+} from '../lib/labels';
 import '../styles.css';
 
 const TreemapChart = lazy(() => import('./TreemapChart'));
@@ -162,6 +169,7 @@ export default function Dashboard() {
     navigate(null);
     setCreditType('CP');
   };
+  const creditLabels = creditTypeLabels[creditType];
 
   return (
     <div className="page">
@@ -171,30 +179,25 @@ export default function Dashboard() {
       <header className="hero">
         <div className="hero-badge">Prototype · données de démonstration PLF 2027</div>
         <h1>Où va l’argent prévu par l’État en 2027 ?</h1>
-        <p className="sub">
-          Budget général de l’État, y compris remboursements et dégrèvements d’impôts. Comparaison
-          avec les crédits votés pour 2026.
-        </p>
+        <p className="sub">{sectionLabels.heroSub}</p>
       </header>
       <nav className="toolbar" aria-label="Filtres budgétaires">
         <div className="seg" role="group" aria-label="Type de crédits">
-          <button
-            aria-pressed={creditType === 'CP'}
-            className={creditType === 'CP' ? 'on' : ''}
-            onClick={() => setCreditType('CP')}
-          >
-            Paiements prévus (CP)
-          </button>
-          <button
-            aria-pressed={creditType === 'AE'}
-            className={creditType === 'AE' ? 'on' : ''}
-            onClick={() => setCreditType('AE')}
-          >
-            Engagements autorisés (AE)
-          </button>
+          {(Object.keys(creditTypeLabels) as ('CP' | 'AE')[]).map((ct) => (
+            <button
+              key={ct}
+              aria-pressed={creditType === ct}
+              className={creditType === ct ? 'on' : ''}
+              onClick={() => setCreditType(ct)}
+              aria-label={creditTypeLabels[ct].button}
+            >
+              {creditTypeLabels[ct].button}
+              <span className="seg-acro">{creditTypeLabels[ct].acronym}</span>
+            </button>
+          ))}
         </div>
         <label className="search-input">
-          Rechercher une mission
+          {sectionLabels.search}
           <input
             type="search"
             value={search}
@@ -205,24 +208,30 @@ export default function Dashboard() {
         <button className="reset-btn" onClick={reset}>
           Réinitialiser
         </button>
-        <button className="expert-toggle" aria-pressed={expert} onClick={() => setExpert(!expert)}>
-          Vue {expert ? 'citoyenne' : 'experte'}
+        <button
+          className="expert-toggle"
+          aria-pressed={expert}
+          onClick={() => setExpert(!expert)}
+        >
+          {expert ? sectionLabels.expert.toggleOff : sectionLabels.expert.toggle}
         </button>
-        <a href="/?page=methodologie">Méthodologie et glossaire</a>
+        <a href="/?page=methodologie">{sectionLabels.methodoLink}</a>
       </nav>
+      <p className="acro-help">
+        <b>{acronymHelp.intro}</b> {creditLabels.help} {acronymHelp.LFI} {acronymHelp.PLF}{' '}
+        {acronymHelp.budgetGeneral}
+      </p>
       <main id="contenu" tabIndex={-1}>
-        <p className="note">
-          Les montants présentés correspondent aux crédits prévus dans le PLF 2027. Ils ne
-          représentent pas encore les dépenses effectivement réalisées.
-        </p>
+        <p className="note">{sectionLabels.note}</p>
         <p className="hint">
-          Périmètre : budget général · {creditType} · montants en euros · source : PDF de
-          démonstration PLF 2027, p. 307–313.{' '}
-          {search && 'Tous les totaux et parts ci-dessous portent sur les missions filtrées.'}
+          Périmètre : budget général de l’État, remboursements et dégrèvements compris ·{' '}
+          {creditLabels.help} · montants en euros · source : PDF de démonstration PLF 2027,
+          p. 307–313.{' '}
+          {search && 'Tous les totaux et parts ci-dessous portent sur les domaines filtrés.'}
         </p>
         {error && <p role="alert">Impossible de charger les données : {error}</p>}
         <div role="status" aria-live="polite" className="sr-only">
-          {loading ? 'Chargement' : `${sorted.length} missions affichées, ${creditType}`}
+          {loading ? 'Chargement' : `${sorted.length} domaines d’action affichés, ${creditLabels.acronym}`}
         </div>
         {loading ? (
           <p className="loading">Chargement des données budgétaires…</p>
@@ -230,41 +239,45 @@ export default function Dashboard() {
           <>
             <section className="kpis" aria-label="Chiffres clés du budget général">
               <div className="kpi">
-                <div className="label">Budget total prévu — {creditType} 2027</div>
+                <div className="label">{kpiLabels[creditType].total27}</div>
                 <div className="value">{fmtEUR(total27)}</div>
                 <div className="sub">
-                  {sorted.length} missions {search ? '(filtrées)' : ''} · crédits bruts
+                  {kpiSubLabels.total27} · {sorted.length} domaines {search ? '(filtrés)' : ''} ·{' '}
+                  {creditLabels.acronym}
                 </div>
               </div>
               <div className="kpi">
-                <div className="label">Crédits votés — LFI 2026</div>
+                <div className="label">{kpiLabels[creditType].total26}</div>
                 <div className="value">{fmtEUR(total26)}</div>
-                <div className="sub">Mêmes missions et même type de crédits</div>
+                <div className="sub">{kpiSubLabels.total26}</div>
               </div>
               <div className="kpi">
-                <div className="label">Évolution depuis 2026</div>
+                <div className="label">{kpiLabels[creditType].change}</div>
                 <div className="value">
                   {delta >= 0 ? '+' : '−'}
                   {fmtEUR(Math.abs(delta))}
                 </div>
                 <div className="sub">
-                  {fmtPct(evolutionPct(total26, total27) ?? 0)} · {evolutionLabel(total26, total27)}
+                  {fmtPct(evolutionPct(total26, total27) ?? 0)} ·{' '}
+                  {evolutionPhrase(total26, total27)}
                 </div>
               </div>
               <div className="kpi">
-                <div className="label">Premier poste</div>
+                <div className="label">{kpiLabels[creditType].first}</div>
                 <div className="value mission-name">{top[0]?.mission ?? '—'}</div>
-                <div className="sub">{top[0] ? fmtEUR(top[0].y2027) : 'Aucune mission'}</div>
+                <div className="sub">
+                  {top[0] ? `${kpiSubLabels.first} : ${fmtEUR(top[0].y2027)}` : 'Aucune mission'}
+                </div>
               </div>
             </section>
             {!selected ? (
               <>
                 <section aria-labelledby="top-title">
                   <h2 id="top-title" className="section-title">
-                    Les cinq principaux postes
+                    {sectionLabels.top5.title}
                   </h2>
                   <p className="takeaway">
-                    <b>À retenir :</b> les cinq premiers postes représentent{' '}
+                    <b>{sectionLabels.top5.takeIntro}</b> ces cinq domaines représentent{' '}
                     {topShare.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % des crédits{' '}
                     {search ? 'filtrés' : 'du budget général'} en {creditType} 2027.{' '}
                     {largestGains.length > 0 && (
@@ -292,17 +305,17 @@ export default function Dashboard() {
                     ))}
                   </div>
                   <a className="explore-btn" href="#missions">
-                    Explorer les missions
+                    {sectionLabels.top5.explore}
                   </a>
                 </section>
                 <section className="panel" aria-labelledby="hundred-title">
-                  <h2 id="hundred-title">Pour 100 € de crédits prévus</h2>
+                  <h2 id="hundred-title">{sectionLabels.hundred.title}</h2>
                   <p>
-                    Répartition des {creditType} 2027 du budget général{' '}
+                    Répartition des crédits prévus en 2027 du budget général{' '}
                     {search
-                      ? 'sur les missions filtrées'
-                      : '(crédits bruts, remboursements d’impôts inclus)'}
-                    . Les parts ne décrivent pas l’usage de vos impôts personnels.
+                      ? 'sur les domaines filtrés'
+                      : '(remboursements d’impôts inclus)'}
+                    . {sectionLabels.hundred.note}
                   </p>
                   <ul className="hundred">
                     {top.map((r) => (
@@ -317,7 +330,7 @@ export default function Dashboard() {
                       </li>
                     ))}
                     <li>
-                      Autres missions :{' '}
+                      {sectionLabels.hundred.others} :{' '}
                       <b>
                         {(sorted.length ? 100 - topShare : 0).toLocaleString('fr-FR', {
                           maximumFractionDigits: 2,
@@ -329,12 +342,14 @@ export default function Dashboard() {
                 </section>
                 <section id="missions" aria-labelledby="missions-title">
                   <h2 id="missions-title" tabIndex={-1} className="section-title">
-                    Classement des missions — {creditType} 2027
+                    {sectionLabels.ranking.title} — {creditType} 2027
                   </h2>
                   <p>
-                    Chaque barre compare un montant au plus grand poste. La part porte sur le total
-                    affiché ; l’évolution compare la LFI 2026 au PLF 2027. Source : récapitulatif p.
-                    307–313.
+                    Chaque ligne compare un montant au plus grand domaine.
+                    {' '}
+                    {sectionLabels.ranking.explanation} La part porte sur le total affiché ; la
+                    comparaison porte sur le budget voté en 2026 (LFI) et le projet pour 2027 (PLF).
+                    Source : récapitulatif p. 307–313.
                   </p>
                   <ol className="horizontal-ranking">
                     {sorted.map((r) => (
@@ -362,15 +377,13 @@ export default function Dashboard() {
                       </li>
                     ))}
                   </ol>
-                  {!sorted.length && (
-                    <p className="empty">Aucune mission ne correspond à la recherche.</p>
-                  )}
+                  {!sorted.length && <p className="empty">{sectionLabels.ranking.empty}</p>}
                   <button
                     className="export-btn missions-export"
                     disabled={!sorted.length}
                     onClick={() => exportCredits(sorted, creditType)}
                   >
-                    Exporter le classement en CSV
+                    {sectionLabels.ranking.export}
                   </button>
                   <div className="panel">
                     <RankingTable
@@ -384,12 +397,13 @@ export default function Dashboard() {
                 {expert && (
                   <section aria-labelledby="expert-title">
                     <h2 id="expert-title" className="section-title">
-                      Explorer — vue experte
+                      {sectionLabels.expert.title}
                     </h2>
+                    <p>{sectionLabels.expert.explanation}</p>
                     <p>
-                      Carte : surfaces proportionnelles aux {creditType} 2027. Comparatif : les
-                      quatorze premiers postes en 2026 et 2027. Alternative complète : le tableau de
-                      classement ci-dessus.
+                      Carte : surfaces proportionnelles aux crédits prévus en 2027. Comparatif : les
+                      quatorze premiers domaines, budget voté 2026 face au projet pour 2027.
+                      Alternative complète : le tableau de classement ci-dessus.
                     </p>
                     <Suspense fallback={<p role="status">Chargement des graphiques…</p>}>
                       <div className="grid-2">
@@ -421,7 +435,7 @@ export default function Dashboard() {
                   Mission introuvable
                 </h2>
                 <button className="back-btn" onClick={() => navigate(null)}>
-                  ← Toutes les missions
+                  {sectionLabels.detail.back}
                 </button>
               </section>
             )}

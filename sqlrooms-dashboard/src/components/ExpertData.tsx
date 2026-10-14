@@ -26,6 +26,10 @@ export default function ExpertData({ quality }: { quality: QualityRow[] }) {
   return (
     <div className="panel expert-data">
       <h3>Qualité d’extraction et données brutes</h3>
+      <p className="hint">
+        À quoi cela sert : vérifier que les chiffres affichés dans la vue citoyenne proviennent bien
+        du document source, et inspecter les lignes extraites page par page.
+      </p>
       <p className="quality-summary">
         {gaps.length
           ? `${gaps.length} écarts détectés entre totaux imprimés et programmes.`

@@ -25,7 +25,7 @@ const Cell = (props: any) => {
       className="tm-cell"
       role="button"
       tabIndex={0}
-      aria-label={`${name} : ${fmtEUR(amount)}. Voir les programmes`}
+      aria-label={`${name} : ${fmtEUR(amount)}. Voir les programmes de ce domaine`}
       onClick={() => props?.onSelect?.(name)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -69,8 +69,8 @@ export default function TreemapChart({ data, total, onSelect }: Props) {
     <div className="panel">
       <h3>Où va l’argent : la carte des crédits</h3>
       <p className="hint">
-        Chaque rectangle est une mission, à l’échelle de ses crédits 2027. Cliquez pour zoomer sur
-        ses programmes.
+        Chaque rectangle est une mission, c’est-à-dire un domaine d’action de l’État, dessiné à
+        l’échelle de ses crédits prévus en 2027. Cliquez pour voir ses programmes.
       </p>
       {chartData.length === 0 ? (
         <div className="empty">Aucune mission ne correspond à la recherche.</div>
@@ -97,7 +97,7 @@ export default function TreemapChart({ data, total, onSelect }: Props) {
                       Crédits 2027 : <b>{fmtEUR(c.y2027)}</b>
                     </div>
                     <div className="tt-muted">
-                      {fmtPct(c.share, 1)} du total · LFI 2026 : {fmtEUR(c.y2026)}
+                      {fmtPct(c.share, 1)} du total · Budget voté 2026 : {fmtEUR(c.y2026)}
                     </div>
                   </div>
                 );

@@ -2,6 +2,7 @@ import type { MissionRow } from './Dashboard';
 import RankingTable from './RankingTable';
 import { evolutionLabel, fmtEUR } from '../lib/format';
 import { exportCredits } from '../lib/csv';
+import { sectionLabels } from '../lib/labels';
 
 export interface QualityRow {
   mission: string;
@@ -30,30 +31,33 @@ export default function MissionDetail({
   onBack: () => void;
 }) {
   const ranked = [...programs].sort((a, b) => b.y2027 - a.y2027);
+  const facts = sectionLabels.detail.facts;
   return (
     <section className="panel mission-detail" aria-labelledby="mission-title">
       <button className="back-btn" onClick={onBack}>
-        ← Toutes les missions
+        {sectionLabels.detail.back}
       </button>
+      <p className="detail-kicker">{sectionLabels.detail.kicker}</p>
       <h2 id="mission-title" tabIndex={-1}>
         {mission.mission}
       </h2>
       <p>
-        Une mission regroupe des programmes qui contribuent à une politique publique. Ici, les
-        crédits prévus concernent{' '}
+        {sectionLabels.detail.intro} Ici, les principales actions financées sont{' '}
         {ranked
           .slice(0, 3)
           .map((p) => p.mission)
           .join(' ; ') || 'les programmes ci-dessous'}
-        . Lecture fondée sur les intitulés du récapitulatif, pas sur une évaluation des résultats.
+        . {sectionLabels.detail.reserve}
       </p>
       <dl className="mission-facts">
         <div>
-          <dt>Montant prévu — {creditType} 2027</dt>
+          <dt>
+            {facts.amount} ({creditType})
+          </dt>
           <dd>{fmtEUR(mission.y2027)}</dd>
         </div>
         <div>
-          <dt>Part du budget général complet</dt>
+          <dt>{facts.share}</dt>
           <dd>
             {(budgetTotal ? (mission.y2027 / budgetTotal) * 100 : 0).toLocaleString('fr-FR', {
               maximumFractionDigits: 1,
@@ -62,11 +66,13 @@ export default function MissionDetail({
           </dd>
         </div>
         <div>
-          <dt>Depuis la LFI 2026 ({fmtEUR(mission.y2026)})</dt>
+          <dt>
+            {facts.change} ({fmtEUR(mission.y2026)})
+          </dt>
           <dd>{evolutionLabel(mission.y2026, mission.y2027)}</dd>
         </div>
         <div>
-          <dt>Programmes / dotations</dt>
+          <dt>{facts.lines}</dt>
           <dd>{loading ? 'Chargement…' : programs.length} (lignes sans crédits incluses)</dd>
         </div>
       </dl>
@@ -91,13 +97,16 @@ export default function MissionDetail({
             peut être incomplet ; le total imprimé reste utilisé.
           </p>
         ))}
-      <h3>Programmes — {mission.mission}</h3>
+      <p>{sectionLabels.detail.programsIntro}</p>
+      <h3>
+        {sectionLabels.detail.programsTitle} {mission.mission}
+      </h3>
       <button
         className="export-btn"
         disabled={loading || !programs.length}
         onClick={() => exportCredits(programs, creditType, mission.mission)}
       >
-        Exporter les programmes en CSV
+        {sectionLabels.detail.export}
       </button>
       {loading ? (
         <p role="status">Chargement des programmes…</p>

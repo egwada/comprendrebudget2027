@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { MissionRow } from './Dashboard';
 import { fmtEUR, evolutionLabel, evolutionPct } from '../lib/format';
+import { columnLabels } from '../lib/labels';
 
 interface Props {
   data: MissionRow[];
@@ -38,11 +39,11 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
     }
   };
   const cols: [SortKey, string][] = [
-    ['name', kind === 'missions' ? 'Mission' : 'Programme'],
-    ['y2026', 'LFI 2026'],
-    ['y2027', 'PLF 2027'],
-    ['evol', 'Évolution'],
-    ['share', 'Part'],
+    ['name', kind === 'missions' ? columnLabels.mission : columnLabels.programme],
+    ['y2026', columnLabels.y2026],
+    ['y2027', columnLabels.y2027],
+    ['evol', columnLabels.evol],
+    ['share', columnLabels.share],
   ];
   const total26 = data.reduce((s, r) => s + r.y2026, 0);
   const total27 = data.reduce((s, r) => s + r.y2027, 0);
@@ -56,12 +57,12 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
       className="tbl-wrap"
       tabIndex={0}
       role="region"
-      aria-label={`Tableau des ${kind}, défilement horizontal possible`}
+      aria-label={`Tableau des ${kind === 'missions' ? 'domaines d’action' : 'programmes'}, défilement horizontal possible`}
     >
       <table className="tbl">
         <caption>
-          Crédits prévus par {kind === 'missions' ? 'mission' : 'programme'} — montants en euros
-          (Md€ : milliards ; M€ : millions). La part porte sur{' '}
+          Crédits prévus par {kind === 'missions' ? 'domaine d’action (mission officielle)' : 'programme'} —
+          montants en euros (Md€ : milliards ; M€ : millions). La part porte sur{' '}
           {kind === 'missions' ? 'le total affiché' : 'le total imprimé de la mission'}.
         </caption>
         <thead>
@@ -78,7 +79,7 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
                 </button>
               </th>
             ))}
-            <th scope="col">Source PDF</th>
+            <th scope="col">{columnLabels.source}</th>
           </tr>
         </thead>
         <tbody>
@@ -126,7 +127,7 @@ export default function RankingTable({ data, totalRef, kind, onSelect }: Props) 
         {kind === 'missions' && rows.length > 0 && (
           <tfoot>
             <tr>
-              <th scope="row">Total ({rows.length} missions)</th>
+              <th scope="row">Total ({rows.length} missions — domaines d’action)</th>
               <td className="num">{fmtEUR(total26)}</td>
               <td className="num">
                 <b>{fmtEUR(total27)}</b>

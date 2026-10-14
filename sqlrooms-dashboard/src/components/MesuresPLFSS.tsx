@@ -59,18 +59,19 @@ export default function MesuresPLFSS() {
   return (
     <div className="panel">
       <div className="panel-head">
-        <h3>Mesures de redressement — sécurité sociale (PLFSS 2027)</h3>
+        <h3>Détail des mesures, branche par branche (PLFSS 2027)</h3>
       </div>
       <p className="hint">
-        Mesures documentées sur le périmètre sécurité sociale, branche par branche.
-        Elles ne constituent pas une ventilation chiffrée des 43 Md€. Ventilation exacte PLF / PLFSS{' '}
-        <b>non publiée</b> à ce stade — chiffres curation page par page depuis le texte soumis
-        au Conseil des ministres (NOR CPPX2620963L/Bleue-1).
+        Mesures documentées sur le périmètre sécurité sociale, branche par branche. Le PLFSS est un
+        texte distinct du budget général de l’État. Elles ne constituent pas une ventilation
+        chiffrée des 43 Md€. Ventilation exacte PLF / PLFSS <b>non publiée</b> à ce stade —
+        chiffres curation page par page depuis le texte soumis au Conseil des ministres
+        (NOR CPPX2620963L/Bleue-1).
       </p>
       <button className="plfss-export export-btn" onClick={() => downloadCsv('mesures-plfss.csv', rows.map((r) => ({ ...r, scope: 'securite_sociale', unite: 'Md€', source_document: 'plfss_2027_texte.pdf', qualite_extraction: 'curation_sourcee_non_additive' })))}>Exporter les mesures documentées en CSV (sans total)</button>
       <div className="tbl-wrap" role="region" tabIndex={0} aria-label="Mesures PLFSS, défilement horizontal possible">
         <table className="tbl plfss-table">
-          <caption>Mesures PLFSS — montants en Md€, années indiquées par ligne, périmètre sécurité sociale. Ne pas additionner.</caption>
+          <caption>Mesures PLFSS — montants en Md€, années indiquées par ligne, périmètre sécurité sociale. Ces mesures ne doivent pas être additionnées entre elles.</caption>
           <thead>
             <tr>
               <th>Branche</th>

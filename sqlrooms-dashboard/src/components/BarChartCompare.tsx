@@ -38,10 +38,11 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
 
   return (
     <div className="panel">
-      <h3>LFI 2026 → PLF 2027, mission par mission</h3>
+      <h3>Budget voté en 2026 comparé au projet pour 2027, domaine par domaine</h3>
       <p className="hint">
-        Top {data.length} en {creditType} 2027 (Md€). Barre claire : LFI 2026 · barre foncée : PLF
-        2027. Cliquez sur une mission pour la détailler.
+        Top {data.length} en {creditType} 2027 (Md€). Barre claire : LFI 2026, le budget voté ·
+        barre foncée : PLF 2027, le projet de loi de finances. Cliquez sur un domaine pour le
+        détailler.
       </p>
       {chartData.length === 0 ? (
         <div className="empty">Aucune donnée à afficher.</div>
@@ -82,9 +83,11 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
                   <div className="tt">
                     <b>{it.mission}</b>
                     <div style={{ marginTop: 4 }}>
-                      LFI 2026 : <b>{fmtEUR(it['LFI 2026'] * 1e9)}</b>
+                      Budget voté en 2026 (LFI) : <b>{fmtEUR(it['LFI 2026'] * 1e9)}</b>
                     </div>
-                    <div className="tt-muted">PLF 2027 : {fmtEUR(it['PLF 2027'] * 1e9)}</div>
+                    <div className="tt-muted">
+                      Prévu pour 2027 (PLF) : {fmtEUR(it['PLF 2027'] * 1e9)}
+                    </div>
                   </div>
                 );
               }}
@@ -92,6 +95,7 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Bar
               dataKey="LFI 2026"
+              name="Voté en 2026 (LFI)"
               fill="#c5c5f2"
               radius={[0, 3, 3, 0]}
               barSize={11}
@@ -99,6 +103,7 @@ export default function BarChartCompare({ data, creditType, onSelect }: Props) {
             />
             <Bar
               dataKey="PLF 2027"
+              name="Prévu pour 2027 (PLF)"
               fill="#000091"
               radius={[0, 3, 3, 0]}
               barSize={11}

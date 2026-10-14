@@ -1,7 +1,7 @@
 # Plan — mieux accompagner la compréhension citoyenne
 
 **Branche** : `feat/citoyen-05-comprehension-intitules`  
-**Statut** : plan à mettre en œuvre  
+**Statut** : mis en œuvre (dictionnaire éditorial dans `sqlrooms-dashboard/src/lib/labels.ts`, tests automatisés à jour) — validation avec des citoyens à réaliser (étape 6).  
 **Périmètre** : vue citoyenne du dashboard, sans modification des données ni des intitulés officiels des sources
 
 ## Objectif

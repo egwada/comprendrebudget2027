@@ -28,9 +28,17 @@ export function evolutionPct(prev: number, curr: number): number | null {
 
 export function evolutionLabel(prev: number, curr: number): string {
   const pct = evolutionPct(prev, curr);
-  if (pct === null) return curr ? 'Nouveau — sans crédits en 2026' : 'Sans crédits';
-  if (pct === 0) return '→ Stable (0 %)';
-  return `${pct > 0 ? '↑ Hausse' : '↓ Baisse'} de ${Math.abs(pct).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+  if (pct === null) return curr ? 'Nouveau en 2027 — pas de crédits votés en 2026' : 'Sans crédits';
+  if (pct === 0) return '→ Stable par rapport à 2026 (0 %)';
+  return `${pct > 0 ? '↑ Hausse' : '↓ Baisse'} de ${Math.abs(pct).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} % par rapport à 2026`;
+}
+
+/** Libellé explicite sans flèche ni couleur, pour le KPI d'évolution. */
+export function evolutionPhrase(prev: number, curr: number): string {
+  const pct = evolutionPct(prev, curr);
+  if (pct === null) return 'domaine nouveau en 2027, sans crédits votés en 2026';
+  if (pct === 0) return 'stabilité par rapport au budget voté en 2026';
+  return `${pct > 0 ? 'hausse' : 'baisse'} par rapport au budget voté en 2026`;
 }
 
 /** Palette qualitative (Tableau 10) — lisible en treemap, stable par mission. */

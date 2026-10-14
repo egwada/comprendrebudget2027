@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { query } from '../duckdb';
 import MesuresPLFSS from './MesuresPLFSS';
 import { downloadCsv } from '../lib/csv';
+import { contextLabels } from '../lib/labels';
 
 interface ContextRow {
   cle: string;
@@ -41,17 +42,11 @@ export default function BudgetContext() {
   return (
     <section className="budget-context" aria-labelledby="context-title">
       <h2 id="context-title" className="section-title">
-        Comprendre les 43 et 54 Md€ — des périmètres distincts
+        {contextLabels.title}
       </h2>
+      <p className="note">{contextLabels.intro}</p>
       <p className="note">
-        Les 43 Md€ concernent les textes financiers PLF + PLFSS. Les 54 Md€ agrègent un périmètre
-        plus large et une trajectoire à politique inchangée. Ils ne correspondent pas à la variation
-        des crédits du seul budget général entre 2026 et 2027.
-      </p>
-      <p>
-        Ces chiffres de contexte ne s’ajoutent pas aux crédits du budget général et ne sont pas
-        affectés par les filtres CP / AE ou la recherche. La ventilation exacte PLF / PLFSS est{' '}
-        <b>non publiée</b> dans les documents disponibles.
+        <b>{contextLabels.notAdditive}</b>
       </p>
       {error && <p role="alert">Contexte indisponible : {error}</p>}
       <h3>Les chiffres du rapport général</h3>
@@ -94,7 +89,8 @@ export default function BudgetContext() {
         Exporter les chiffres de contexte en CSV
       </button>
       <section aria-labelledby="plfss-title">
-        <h3 id="plfss-title">Sécurité sociale — mesures documentées du PLFSS 2027</h3>
+        <h3 id="plfss-title">{contextLabels.plfssTitle}</h3>
+        <p className="hint">{contextLabels.plfssExplanation}</p>
         <MesuresPLFSS />
       </section>
     </section>
