@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect, useState, useCallback } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useCallback } from 'react';
 import Methodology from './components/Methodology';
-import Navigation, { type View, isView } from './components/Navigation';
+import Navigation from './components/Navigation';
 import Home from './components/Home';
+import { type View, isView } from './lib/views';
 
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const BudgetContext = lazy(() => import('./components/BudgetContext'));
@@ -11,18 +12,21 @@ function getViewFromURL(): View {
   const params = new URLSearchParams(location.search);
   const v = params.get('vue');
   if (v && isView(v)) return v;
+  // Avant l’ajout de ?vue=, les fiches mission étaient partagées en #mission=…
+  if (new URLSearchParams(location.hash.slice(1)).has('mission')) return 'budget';
   return 'accueil';
 }
 
 export default function App() {
   const [view, setView] = useState<View>(getViewFromURL);
+  const previousView = useRef(view);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState<Record<View, boolean>>({
     accueil: true,
-    budget: false,
-    dette: false,
-    contexte: false,
+    budget: view === 'budget',
+    dette: view === 'dette',
+    contexte: view === 'contexte',
   });
 
   const methodologyPage = new URLSearchParams(location.search).get('page') === 'methodologie';
@@ -41,16 +45,22 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [methodologyPage]);
 
   useEffect(() => {
-    const onPop = () => setView(getViewFromURL());
+    const onPop = () => {
+      const next = getViewFromURL();
+      setView(next);
+      setMounted((prev) => (prev[next] ? prev : { ...prev, [next]: true }));
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   useEffect(() => {
-    setMounted((prev) => ({ ...prev, [view]: true }));
+    if (previousView.current === view) return;
+    previousView.current = view;
+    document.querySelector<HTMLAnchorElement>('.tab-link[aria-current="page"]')?.focus();
   }, [view]);
 
   const navigate = useCallback((next: View) => {
@@ -59,6 +69,7 @@ export default function App() {
     // keep hash (#mission=...) intact
     history.pushState(null, '', url.toString());
     setView(next);
+    setMounted((prev) => (prev[next] ? prev : { ...prev, [next]: true }));
   }, []);
 
   if (methodologyPage) return <Methodology />;

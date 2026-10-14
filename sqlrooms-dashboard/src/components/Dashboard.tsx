@@ -210,7 +210,6 @@ export default function Dashboard() {
         >
           {expert ? sectionLabels.expert.toggleOff : sectionLabels.expert.toggle}
         </button>
-        <a href="/?page=methodologie">{sectionLabels.methodoLink}</a>
       </nav>
       <p className="acro-help">
         <b>{acronymHelp.intro}</b> {creditLabels.help} {acronymHelp.LFI} {acronymHelp.PLF}{' '}

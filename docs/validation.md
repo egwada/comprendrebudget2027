@@ -1,6 +1,6 @@
 # Validation — tableau de bord budgétaire citoyen
 
-**Résultat : 91/91 contrôles headless PASS, 11/11 tests de données PASS, 5/5 tests unitaires PASS.** TypeScript/Vite et lint passent sans avertissement. La validation de cette branche inclut les séries historiques solde/dette et leurs sources.
+**Résultat : 107/107 contrôles headless PASS, 11/11 tests de données PASS, 5/5 tests unitaires PASS.** Build TypeScript/Vite réussi et oxlint sans avertissement. Vite signale encore un avertissement connu : `duckdb.ts` est à la fois importé dynamiquement par `App.tsx` et statiquement par les vues. La validation couvre les quatre vues, les URL directes, l’historique navigateur et les séries historiques solde/dette.
 
 Ce rapport remplace les validations historiques (26 puis 38 contrôles) de la vue initiale. Les défauts d’extraction signalés à l’époque sont corrigés, et les KPI utilisent désormais les totaux mission imprimés, pas la somme des programmes extraits.
 
@@ -29,7 +29,7 @@ Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.1
 - **Agrégation Python indépendante** : calcul attendu depuis les lignes total mission du CSV, sans SQL ni DuckDB ; comparaison avec les KPI et exports du navigateur.
 - **UI réelle** : `dist/` servi en statique ; Chromium avec profil isolé et port CDP libre. Clics, clavier natif via CDP, saisie et navigation.
 - **Régression qualité** : injection d’un écart de 1 M€ dans un programme CP 2027 du CSV du build. Le KPI reste égal au total imprimé et la fiche expose l’écart. Les octets du CSV sont restaurés en `finally`. Cache désactivé pour ce scénario.
-- **Accessibilité** : axe-core (tags WCAG 2 A/AA, 2.1 AA, 2.2 AA) sur vue citoyenne, fiche mission, vue experte, mobile et méthodologie ; tests clavier/focus et contraste de toute la palette treemap.
+- **Accessibilité** : axe-core (tags WCAG 2 A/AA, 2.1 AA, 2.2 AA) sur les quatre vues, fiche mission, vue experte, Accueil mobile, Budget mobile et méthodologie ; tests clavier/focus et contraste de toute la palette treemap.
 
 ## Références numériques (budget général brut)
 
@@ -47,19 +47,19 @@ Prérequis : Python avec `pdfplumber` et `websocket-client`, Chromium, Node 22.1
 
 | Domaine | Contrôles validés |
 |---|---|
-| Entrée | Titre citoyen, avertissement prévision/exécution, caractère fictif annoncé |
-| KPI | CP/AE 2026/2027, delta, 32 missions, premier poste, recherche et réinitialisation |
-| Accueil | Cinq postes, classement horizontal, calcul pour 100 €, graphiques masqués par défaut |
+| Entrée | Titre citoyen, avertissement prévision/exécution, caractère simulé annoncé |
+| Accueil | Cinq agrégats avec année, périmètre, statut et source ; CP, solde exécuté, encours, intérêts et principal amorti |
+| Budget | CP/AE 2026/2027, delta, 32 missions, classement, calcul pour 100 €, recherche, réinitialisation et graphiques masqués par défaut |
 | Tableaux | 32 lignes missions, total en pied, tri asc/desc et `aria-sort`, tri Entrée/Espace ; mise en évidence bleue neutre et appel au clic pour le poste dette |
 | Fiche mission | Investir 2030 et cinq programmes, total imprimé, part du budget complet, pages 309/310, focus, AE zéro |
-| Navigation | Entrée depuis tableau/treemap et clic comparatif avec libellé complet, retour Espace, focus restauré, recherche conservée, retour navigateur |
+| Navigation | Quatre URL directes, onglet actif, focus après navigation, retour/avance navigateur, anciennes URL `#mission`, liens des cartes, navigation mission et retour clavier avec recherche conservée |
 | Expert | 32 cellules treemap, 28 barres comparatives, 668 faits bruts, réconciliation explicite |
 | Exports | Classement 64 lignes, programmes 10 lignes pour Investir, brut 668, contexte 6 et dérivé marqué, PLFSS 17 sans total |
-| Contexte | 43/54 Md€ distincts, année/unité/périmètre/source, indépendance des filtres |
+| Contexte | 43/54 Md€ distincts, année/unité/périmètre/source et réserves de non-additivité |
 | Solde et dette | Solde APU AMECO 1974–2024 avec ligne zéro ; solde exécuté du budget général INSEE 2009–2025 ; intérêts APU à partir de 1978 ; encours à partir de 1977 affiché en Md ECU/EUR et en % du PIB sur deux graphiques côte à côte, utilisant la largeur disponible ; amortissements MLT État 2019–2024 et intérêts/charge 2023–2024 ; exports sourcés, périmètres explicités |
 | PLFSS | 17 mesures, 278,7 / 5,1 / −12,7 Md€, réserves non-additivité et ventilation non publiée |
 | Sources | Trois PDF réellement servis avec type MIME PDF ; sources AMECO, INSEE et AFT liées aux séries historiques |
-| Accessibilité | Cinq audits axe-core sans violation détectée, tabulation, focus visible, mobile 375 px sans débordement, zoom CSS émulé à 200 %, reduced-motion |
+| Accessibilité | Neuf audits axe-core sans violation détectée (quatre vues, fiche, expert, Accueil mobile, Budget mobile, méthodologie), tabulation, focus visible, mobile 375 px sans débordement, zoom CSS émulé à 200 %, reduced-motion |
 | Robustesse | Absence de doublons, synchronisation des CSV, écart injecté visible sans changement des KPI, restauration du build |
 
 ## Performance

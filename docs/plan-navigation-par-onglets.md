@@ -1,7 +1,7 @@
 # Plan — Navigation par onglets et page d’accueil
 
-**Statut** : proposition à valider, aucune modification fonctionnelle commencée.  
-**Branche** : `feat/deficit-dette-historique`
+**Statut** : implémenté et validé par tests headless.
+**Branche** : `feat/navigation-par-onglets`
 
 ## Objectif
 
@@ -59,8 +59,8 @@ Le pipeline de données et les calculs budgétaires ne doivent pas changer dans 
 - CP/AE, recherche, fiche de mission, exports, données de dette et mesures PLFSS gardent leurs chiffres et leurs sources inchangés.
 - Navigation clavier, indicateur d’onglet actif, focus après navigation, mobile 375 px, zoom 200 % et audit axe-core restent valides.
 
-## Décisions à confirmer avant l’implémentation
+## Décisions retenues à l’implémentation
 
-1. Valider les quatre vues principales proposées (Accueil, Budget, Solde et dette, Mesures et contexte).
-2. Choisir les **3–5 agrégats exacts** de l’accueil et confirmer qu’on y montre ensemble des données de 2027 simulées et les dernières exécutions historiques uniquement dans des blocs explicitement séparés.
-3. Garder la méthodologie comme lien secondaire, plutôt que comme cinquième onglet principal.
+1. Les quatre vues principales sont Accueil, Budget de l’État, Solde et dette, Mesures et contexte ; la méthodologie reste un lien secondaire.
+2. L’accueil contient cinq cartes : total CP 2027 et évolution, dernier solde exécuté du budget général, encours APU, intérêts APU et principal MLT amorti par l’État. Chaque carte indique année, périmètre, statut et source ; le repère 43/54 Md€ reste dans la vue Contexte pour ne pas charger l’accueil.
+3. La navigation utilise des liens HTML ordinaires, `aria-current="page"` et un routeur local ; les vues déjà ouvertes restent montées pour conserver les filtres Budget.

@@ -599,6 +599,8 @@ pre { overflow: auto; padding: 12px; background: #f6f6fa; white-space: pre-wrap;
   display: flex;
   flex-direction: column;
   text-align: left;
+  color: var(--text);
+  text-decoration: none;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);

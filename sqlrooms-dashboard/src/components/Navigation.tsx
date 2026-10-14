@@ -1,9 +1,5 @@
-export type View = 'accueil' | 'budget' | 'dette' | 'contexte';
-const ALL_VIEWS: View[] = ['accueil', 'budget', 'dette', 'contexte'];
-
-export function isView(v: string): v is View {
-  return ALL_VIEWS.includes(v as View);
-}
+import { sectionLabels } from '../lib/labels';
+import type { View } from '../lib/views';
 
 interface NavigationProps {
   active: View;
@@ -28,6 +24,7 @@ export default function Navigation({ active, onNavigate }: NavigationProps) {
             className={`tab-link ${active === t.key ? 'tab-active' : ''}`}
             aria-current={active === t.key ? 'page' : undefined}
             onClick={(e) => {
+              if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
               e.preventDefault();
               onNavigate(t.key);
             }}
@@ -36,7 +33,7 @@ export default function Navigation({ active, onNavigate }: NavigationProps) {
           </a>
         ))}
         <a className="tab-link tab-secondary" href="/?page=methodologie">
-          Méthode
+          {sectionLabels.methodoLink}
         </a>
       </div>
     </nav>

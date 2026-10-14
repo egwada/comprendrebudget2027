@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { query } from '../duckdb';
 import { fmtEUR, evolutionLabel } from '../lib/format';
-import type { View } from './Navigation';
+import type { View } from '../lib/views';
 
 interface HomeKPI {
   label: string;
   value: string;
   sub: string;
   year: string;
+  perimeter: string;
   status: string;
   source: string;
   target: View;
@@ -46,20 +47,20 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
         ORDER BY annee DESC
         LIMIT 1
       `),
-      query<{ cle: string; libelle: string; valeur: number; unite: string; annee: number }>(`
-        SELECT cle, libelle, valeur, unite, annee
-        FROM dim_contexte
-        WHERE cle IN ('total_efforts', 'mesures_2027')
+      query<{ annee: number; amortissement_mlt_md: number }>(`
+        SELECT annee, amortissement_mlt_md
+        FROM fact_financement_dette_etat
+        ORDER BY annee DESC
+        LIMIT 1
       `),
     ])
-      .then(([cp, solde, dette, interets, contexte]) => {
+      .then(([cp, solde, dette, interets, financing]) => {
         if (cancelled) return;
         const cpRow = cp[0] ?? { y2026: 0, y2027: 0 };
         const soldeRow = solde[0];
         const detteRow = dette[0];
         const interetsRow = interets[0];
-        const efforts = contexte.find((c) => c.cle === 'total_efforts');
-        const mesures = contexte.find((c) => c.cle === 'mesures_2027');
+        const financingRow = financing[0];
 
         const items: HomeKPI[] = [
           {
@@ -67,8 +68,9 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
             value: fmtEUR(cpRow.y2027),
             sub: `Évolution vs 2026 : ${evolutionLabel(cpRow.y2026, cpRow.y2027)}`,
             year: '2027',
-            status: 'prévu (simulé)',
-            source: 'PLF 2027 fictif',
+            perimeter: 'Budget général de l’État',
+            status: 'prévision (simulée)',
+            source: 'Assemblée nationale · PLF 2027, pp. 307–313',
             target: 'budget',
           },
         ];
@@ -79,8 +81,9 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
             value: `${soldeRow.solde_md_eur.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Md€`,
             sub: 'Solde cumulé à décembre, INSEE',
             year: String(soldeRow.annee),
+            perimeter: 'Budget général de l’État',
             status: 'exécuté',
-            source: 'INSEE',
+            source: 'INSEE · série 001717255',
             target: 'dette',
           });
         }
@@ -91,8 +94,9 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
             value: `${detteRow.encours_md_eur.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} Md ECU/EUR`,
             sub: `${detteRow.encours_pct_pib.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % du PIB`,
             year: String(detteRow.annee),
-            status: 'observé',
-            source: 'Commission européenne, AMECO',
+            perimeter: 'Administrations publiques',
+            status: 'exécution (série révisable)',
+            source: 'Commission européenne · AMECO',
             target: 'dette',
           });
         }
@@ -103,21 +107,23 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
             value: `${interetsRow.interets_md_eur.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} Md ECU/EUR`,
             sub: `${interetsRow.interets_pct_pib.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} % du PIB`,
             year: String(interetsRow.annee),
-            status: 'observé',
-            source: 'Commission européenne, AMECO',
+            perimeter: 'Administrations publiques',
+            status: 'exécution (série révisable)',
+            source: 'Commission européenne · AMECO',
             target: 'dette',
           });
         }
 
-        if (efforts) {
+        if (financingRow) {
           items.push({
-            label: efforts.libelle,
-            value: `${efforts.valeur.toLocaleString('fr-FR', { maximumFractionDigits: 1 }).replace('-', '−')} ${efforts.unite}`,
-            sub: mesures ? `Dont mesures 2027 : ${mesures.valeur.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} ${mesures.unite}` : '',
-            year: String(efforts.annee),
-            status: 'prévu',
-            source: 'PLF 2027 fictif',
-            target: 'contexte',
+            label: 'Principal de dette de l’État amorti à moyen et long terme',
+            value: `${financingRow.amortissement_mlt_md.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Md€`,
+            sub: 'Rapport de la Cour des comptes 2024 · données AFT, pp. 14–15',
+            year: String(financingRow.annee),
+            perimeter: 'État',
+            status: 'exécuté',
+            source: 'Cour des comptes · AFT',
+            target: 'dette',
           });
         }
 
@@ -142,23 +148,29 @@ export default function Home({ onNavigate }: { onNavigate: (v: View) => void }) 
     <div className="home-view">
       <h2 className="section-title">Aperçu des finances publiques</h2>
       <p className="home-intro">
-        Chaque repère ci-dessous mène aux données détaillées. Les chiffres de 2027 proviennent d’un
-        document de l’Assemblée nationale ; les séries historiques sont des exécutions observées.
+        Chaque repère mène aux données détaillées. Les prévisions du projet 2027 sont distinguées
+        des exécutions historiques ; chaque carte précise l’année, le périmètre, le statut et la
+        source du chiffre.
       </p>
       <div className="home-grid">
         {kpis.map((kpi) => (
-          <button
+          <a
             key={kpi.label}
             className="home-card"
-            onClick={() => onNavigate(kpi.target)}
+            href={`?vue=${kpi.target}`}
+            onClick={(e) => {
+              if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              onNavigate(kpi.target);
+            }}
           >
             <span className="home-card-meta">
-              {kpi.year} · {kpi.status} · {kpi.source}
+              {kpi.year} · {kpi.perimeter} · {kpi.status} · {kpi.source}
             </span>
             <span className="home-card-value">{kpi.value}</span>
             <span className="home-card-label">{kpi.label}</span>
             <span className="home-card-sub">{kpi.sub}</span>
-          </button>
+          </a>
         ))}
       </div>
     </div>

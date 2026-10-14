@@ -60,6 +60,7 @@ def fmt(n):
 
 class Browser:
     def __init__(self, port):
+        self.port = port
         executable = shutil.which('chromium-browser') or shutil.which('chromium')
         if not executable:
             raise RuntimeError('Chromium introuvable')
@@ -151,7 +152,7 @@ class Browser:
 
 def _nav(b, view):
     b.click(f'a[href="?vue={view}"]')
-    time.sleep(0.3)
+    b.wait(f"document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue={view}'")
 
 
 def audit_accessibility(browser, label):
@@ -167,6 +168,29 @@ def audit_accessibility(browser, label):
 def run_ui_checks(browser, exp):
     b = browser
     b.wait("!!document.querySelector('.tab-nav')")
+    b.wait("document.querySelectorAll('.home-card').length === 5")
+    audit_accessibility(b, 'accueil')
+    check('sans paramètre : accueil actif', b.js("document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue=accueil'"))
+    check('accueil : cinq repères avec année, périmètre, statut et source', b.js("[...document.querySelectorAll('.home-card-meta')].every(e => e.innerText.split('·').length >= 4)"))
+    check('accueil : principal remboursé, année et périmètre explicites', b.js("[...document.querySelectorAll('.home-card')].some(e => e.innerText.includes('Principal de dette') && e.innerText.includes('2024') && e.innerText.includes('État'))"))
+    b.click('.home-card:first-child')
+    b.wait("location.search.includes('vue=budget') && document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue=budget'")
+    check('carte accueil : ouvre Budget avec URL et focus de navigation', b.js("document.activeElement === document.querySelector('.tab-link[aria-current=page]')"))
+    b.js('history.back()')
+    b.wait("document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue=accueil'")
+    check('retour navigateur : restaure Accueil', b.js("location.search === ''"))
+    b.js('history.forward()')
+    b.wait("document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue=budget'")
+    check('avance navigateur : restaure Budget', b.js("location.search.includes('vue=budget')"))
+    for direct_view in ('accueil', 'budget', 'dette', 'contexte'):
+        b.command('Page.navigate', {'url': f'http://localhost:{b.port}/?vue={direct_view}'})
+        b.wait(f"document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue={direct_view}'")
+        check(f'URL directe : vue {direct_view}', b.js(f"new URLSearchParams(location.search).get('vue') === '{direct_view}'"))
+    b.command('Page.navigate', {'url': f'http://localhost:{b.port}/#mission=Investir%20pour%20la%20France%20de%202030'})
+    b.wait("document.querySelector('#mission-title')?.innerText.includes('Investir pour la France de 2030')")
+    check('compatibilité ancienne URL #mission sans ?vue', b.js("document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue=budget'"))
+    b.click('.back-btn')
+    b.wait("!!document.querySelector('.horizontal-ranking')")
     _nav(b, 'budget')
     b.wait("!!document.querySelector('.kpis')")
     check('pas d’écran d’erreur', not b.js("document.body.innerText.includes('Erreur au lancement')"))
@@ -184,6 +208,7 @@ def run_ui_checks(browser, exp):
     check('graphiques encours utilisent toute la largeur disponible', b.js("(() => { const p=document.querySelector('.finance-debt-panel'), g=document.querySelector('.finance-chart-grid'); return !!p && !!g && p.getBoundingClientRect().width >= g.getBoundingClientRect().width * .95; })()"))
     check('dette État : intérêts, principal et émissions séparés', b.js("document.querySelector('.finance-financing-table tbody tr:last-child').innerText.includes('155,1 Md€') && document.querySelector('.finance-financing-table tbody tr:last-child').innerText.includes('46,5 Md€') && document.querySelector('.finance-financing-table tbody tr:last-child').innerText.includes('285 Md€')"))
     check('dette État : intérêts indisponibles avant 2023 restent manquants', b.js("document.querySelector('.finance-financing-table tbody tr:first-child').innerText.includes('—')"))
+    audit_accessibility(b, 'solde et dette')
     _nav(b, 'budget')
     audit_accessibility(b, 'vue citoyenne')
     b.js("window.__exportBlob = null; window.__createURL = URL.createObjectURL; URL.createObjectURL = blob => { window.__exportBlob = blob; return window.__createURL(blob); }")
@@ -293,6 +318,7 @@ def run_ui_checks(browser, exp):
     b.click('.back-btn')
     _nav(b, 'contexte')
     b.wait("document.querySelectorAll('.ctx-card').length === 6 && document.querySelector('.plfss-table tbody')?.rows.length === 17")
+    audit_accessibility(b, 'mesures et contexte')
     context = b.js("document.querySelector('.budget-context').innerText")
     check('contexte : 43 et 54 Md€ distingués sans les additionner', '43 Md€' in context and '54 Md€' in context and 'Les 43 Md€ sont déjà compris dans les 54 Md€' in context)
     check('contexte : unités, année, périmètre et source', 'Administrations publiques' in context and '2027' in context and 'Voir la source, page 12' in context)
@@ -314,7 +340,11 @@ def run_ui_checks(browser, exp):
     time.sleep(.2)
     check('mobile : pas de débordement de page', b.js('document.documentElement.scrollWidth <= innerWidth'))
     check('mobile : recherche visible', b.js("document.querySelector('.search-input input').getBoundingClientRect().width <= innerWidth"))
-    audit_accessibility(b, 'mobile 375 px')
+    audit_accessibility(b, 'mobile 375 px, vue Budget')
+    _nav(b, 'accueil')
+    check('mobile 375 px : accueil sans débordement', b.js("document.documentElement.scrollWidth <= innerWidth && document.querySelectorAll('.home-card').length === 5"))
+    audit_accessibility(b, 'mobile 375 px, accueil')
+    _nav(b, 'budget')
     b.command('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]})
     check('réduction des animations', b.js("matchMedia('(prefers-reduced-motion: reduce)').matches && getComputedStyle(document.querySelector('.mcard')).transitionDuration === '0s'"))
     b.command('Emulation.setDeviceMetricsOverride', {'width': 640, 'height': 450, 'deviceScaleFactor': 2, 'mobile': False})
