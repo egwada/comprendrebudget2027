@@ -21,7 +21,6 @@ function TreemapCell(node: ChartNode) {
     return (
       <g className="home-treemap-mission">
         <rect x={x} y={y} width={width} height={height} fill={baseColor} stroke="#fff" strokeWidth={2} />
-        <title>{mission} : {fmtEUR(node.amount ?? node.value)}</title>
       </g>
     );
   }
@@ -29,11 +28,9 @@ function TreemapCell(node: ChartNode) {
   const program = node.programme ?? node.name;
   const background = programTreemapColor(mission, index);
   const textColor = labelColorFor(background);
-  const amount = node.amount ?? node.value;
   return (
     <g className="home-treemap-program">
       <rect x={x} y={y} width={width} height={height} fill={background} stroke="#fff" strokeWidth={1} />
-      <title>{program} — {mission} : {fmtEUR(amount)}</title>
       {width > 86 && height > 26 && (
         <text x={x + 5} y={y + 16} fill={textColor} fontSize={10}>
           {truncate(program, 25)}

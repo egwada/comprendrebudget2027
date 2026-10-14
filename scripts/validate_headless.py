@@ -173,6 +173,7 @@ def run_ui_checks(browser, exp):
     audit_accessibility(b, 'accueil')
     check('accueil : treemap hiérarchique, 32 missions et plus de 100 programmes avec crédits', b.js("document.querySelectorAll('.home-treemap-mission').length === 32 && document.querySelectorAll('.home-treemap-program').length >= 100"))
     check('accueil : couleurs distinctes par mission et nuances par programme', b.js("new Set([...document.querySelectorAll('.home-treemap-mission rect')].map(e => e.getAttribute('fill'))).size >= 30 && new Set([...document.querySelectorAll('.home-treemap-program rect')].map(e => e.getAttribute('fill'))).size > 30"))
+    check('treemap : aucun titre SVG natif ne double l’infobulle', b.js("![...document.querySelectorAll('.home-budget-treemap-chart svg title')].some(e => e.textContent.trim())"))
     check('accueil : tableau alternatif de 135 programmes, sans total en double', b.js("document.querySelectorAll('.home-treemap-values tbody tr').length === 135 && !document.querySelector('.home-treemap-values tfoot')"))
     check('note ECU/EUR présente en bas de page', b.js("document.querySelector('.currency-note').innerText.includes('1 ECU = 1 EUR') && document.querySelector('.currency-note').innerText.includes('pas corrigés de l’inflation')"))
     check('sans paramètre : accueil actif', b.js("document.querySelector('.tab-link[aria-current=page]')?.getAttribute('href') === '?vue=accueil'"))
