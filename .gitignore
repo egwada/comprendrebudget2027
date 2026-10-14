@@ -16,6 +16,8 @@ data/
 # Large binary
 *.pdf
 !sources/neb-2024-gestion-dette-tresorerie-etat.pdf
+!/l17b3210_projet-loi.pdf
+!/plfss_2027_texte.pdf
 
 # IDE
 .vscode/

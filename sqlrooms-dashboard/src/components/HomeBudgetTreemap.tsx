@@ -4,6 +4,7 @@ import type { TreemapNode } from 'recharts';
 import { query } from '../duckdb';
 import { buildBudgetTreemap, missionTreemapColor, programTreemapColor, type BudgetCreditRow } from '../lib/budgetTreemap';
 import { fmtEUR, labelColorFor, truncate } from '../lib/format';
+import { publicUrl } from '../lib/publicUrl';
 
 interface ChartNode extends TreemapNode {
   mission?: string;
@@ -129,7 +130,7 @@ export default function HomeBudgetTreemap() {
           </div>
           <p className="finance-source">
             Source : document PLF 2027 de l’Assemblée nationale, récapitulatif général, pages 307–313.{' '}
-            <a href="/sources/l17b3210_projet-loi.pdf#page=307" target="_blank" rel="noreferrer">
+            <a href={publicUrl('sources/l17b3210_projet-loi.pdf#page=307')} target="_blank" rel="noreferrer">
               Ouvrir le PDF source (nouvel onglet)
             </a>
             . La taille des programmes est répartie proportionnellement à leurs montants pour

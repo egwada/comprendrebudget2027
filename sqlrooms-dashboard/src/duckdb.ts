@@ -1,4 +1,5 @@
 import * as duckdb from '@duckdb/duckdb-wasm';
+import { publicUrl } from './lib/publicUrl';
 
 let db: duckdb.AsyncDuckDB | null = null;
 let conn: duckdb.AsyncDuckDBConnection | null = null;
@@ -14,8 +15,8 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
   console.log('[DUCKDB] Loading local bundles...');
   // Local files (same origin) — avoids cross-origin Worker restrictions
   const bundle: duckdb.DuckDBBundle = {
-    mainModule: '/duckdb/duckdb-eh.wasm',
-    mainWorker: '/duckdb/duckdb-browser-eh.worker.js',
+    mainModule: publicUrl('duckdb/duckdb-eh.wasm'),
+    mainWorker: publicUrl('duckdb/duckdb-browser-eh.worker.js'),
     pthreadWorker: null,
   };
 
@@ -30,8 +31,9 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
 
   // Load CSV
   console.log('[DUCKDB] Fetching CSV...');
-  const csvText = await fetch('/data/fact_credits.csv').then((r) => {
-    if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/fact_credits.csv`);
+  const creditsUrl = publicUrl('data/fact_credits.csv');
+  const csvText = await fetch(creditsUrl).then((r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} pour ${creditsUrl}`);
     return r.text();
   });
   console.log('[DUCKDB] CSV fetched, length:', csvText.length);
@@ -46,8 +48,9 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
 
   // Contexte éditorial : chiffres du rapport général (cf. ADR-003)
   console.log('[DUCKDB] Fetching context CSV...');
-  const ctxText = await fetch('/data/dim_contexte.csv').then((r) => {
-    if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/dim_contexte.csv`);
+  const contextUrl = publicUrl('data/dim_contexte.csv');
+  const ctxText = await fetch(contextUrl).then((r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} pour ${contextUrl}`);
     return r.text();
   });
   await db.registerFileText('dim_contexte.csv', ctxText);
@@ -58,8 +61,9 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
 
   // Mesures de redressement PLFSS — texte soumis au Conseil des ministres (ADR-004)
   console.log('[DUCKDB] Fetching PLFSS mesures CSV...');
-  const mesText = await fetch('/data/fact_mesures_plfss.csv').then((r) => {
-    if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/fact_mesures_plfss.csv`);
+  const measuresUrl = publicUrl('data/fact_mesures_plfss.csv');
+  const mesText = await fetch(measuresUrl).then((r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} pour ${measuresUrl}`);
     return r.text();
   });
   await db.registerFileText('fact_mesures_plfss.csv', mesText);
@@ -75,8 +79,9 @@ async function doInit(): Promise<duckdb.AsyncDuckDBConnection> {
     ['fact_encours_dette_apu', 'fact_encours_dette_apu.csv'],
     ['fact_financement_dette_etat', 'fact_financement_dette_etat.csv'],
   ]) {
-    const text = await fetch(`/data/${file}`).then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status} pour /data/${file}`);
+    const fileUrl = publicUrl(`data/${file}`);
+    const text = await fetch(fileUrl).then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status} pour ${fileUrl}`);
       return r.text();
     });
     await db.registerFileText(file, text);

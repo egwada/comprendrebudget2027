@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { query } from '../duckdb';
 import { downloadCsv } from '../lib/csv';
+import { publicUrl } from '../lib/publicUrl';
 
 export interface MesureRow {
   branche: string;
@@ -106,7 +107,7 @@ export default function MesuresPLFSS() {
                   <td className="num">
                     <b>{fmt(r.montant_md)}</b>
                   </td>
-                  <td className="num"><a href={`/sources/plfss_2027_texte.pdf#page=${r.source_page}`} target="_blank" rel="noreferrer" aria-label={`PLFSS, page ${r.source_page}, nouvel onglet`}>p. {r.source_page}</a></td>
+                  <td className="num"><a href={publicUrl(`sources/plfss_2027_texte.pdf#page=${r.source_page}`)} target="_blank" rel="noreferrer" aria-label={`PLFSS, page ${r.source_page}, nouvel onglet`}>p. {r.source_page}</a></td>
                 </tr>
               );
             })}

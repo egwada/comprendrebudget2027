@@ -1,4 +1,5 @@
 import { sectionLabels } from '../lib/labels';
+import { publicUrl } from '../lib/publicUrl';
 import type { View } from '../lib/views';
 
 interface NavigationProps {
@@ -32,7 +33,7 @@ export default function Navigation({ active, onNavigate }: NavigationProps) {
             {t.label}
           </a>
         ))}
-        <a className="tab-link tab-secondary" href="/?page=methodologie">
+        <a className="tab-link tab-secondary" href={publicUrl('?page=methodologie')}>
           {sectionLabels.methodoLink}
         </a>
       </div>

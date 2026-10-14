@@ -3,6 +3,7 @@ import RankingTable from './RankingTable';
 import { evolutionLabel, fmtEUR } from '../lib/format';
 import { exportCredits } from '../lib/csv';
 import { sectionLabels } from '../lib/labels';
+import { publicUrl } from '../lib/publicUrl';
 
 export interface QualityRow {
   mission: string;
@@ -83,7 +84,7 @@ export default function MissionDetail({
         {mission.source_pages?.split(', ').map((p, i) => (
           <span key={p}>
             {i > 0 ? ', ' : ''}
-            <a href={`/sources/l17b3210_projet-loi.pdf#page=${p}`} target="_blank" rel="noreferrer">
+            <a href={publicUrl(`sources/l17b3210_projet-loi.pdf#page=${p}`)} target="_blank" rel="noreferrer">
               PDF p. {p} (nouvel onglet)
             </a>
           </span>

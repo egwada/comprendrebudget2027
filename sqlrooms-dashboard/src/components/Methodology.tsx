@@ -1,4 +1,5 @@
 import '../styles.css';
+import { publicUrl } from '../lib/publicUrl';
 
 const TERMS = [
   [
@@ -56,7 +57,7 @@ export default function Methodology() {
         <p>Leur origine, leur signification et les limites de ce qu’on peut en conclure</p>
       </header>
       <nav className="toolbar" aria-label="Navigation">
-        <a href="/">← Retour au tableau de bord</a>
+        <a href={publicUrl('?vue=accueil')}>← Retour au tableau de bord</a>
         <a href="#glossaire">Aller au glossaire</a>
       </nav>
       <main id="methodologie" tabIndex={-1}>
@@ -69,14 +70,14 @@ export default function Methodology() {
           </p>
           <ul>
             <li>
-              <a href="/sources/l17b3210_projet-loi.pdf#page=307">
+              <a href={publicUrl('sources/l17b3210_projet-loi.pdf#page=307')}>
                 PDF PLF 2027, récapitulatif général, pages 307–313
               </a>{' '}
               : crédits des missions et programmes. Rapport général, pages 11–13 : chiffres de
               contexte.
             </li>
             <li>
-              <a href="/sources/plfss_2027_texte.pdf#page=106">PDF PLFSS 2027 local</a> : mesures
+              <a href={publicUrl('sources/plfss_2027_texte.pdf#page=106')}>PDF PLFSS 2027 local</a> : mesures
               documentées, articles et exposés des motifs (pages 45 et 106–121). Leur disponibilité
               locale ne constitue pas une vérification indépendante de leur authenticité.
             </li>
@@ -174,7 +175,7 @@ export default function Methodology() {
             ajouter aux crédits. Les intérêts, le principal, les émissions et l’encours sont des
             notions différentes.{' '}
             <a
-              href="/sources/neb-2024-gestion-dette-tresorerie-etat.pdf"
+              href={publicUrl('sources/neb-2024-gestion-dette-tresorerie-etat.pdf')}
               target="_blank"
               rel="noreferrer"
             >

@@ -3,6 +3,7 @@ import { query } from '../duckdb';
 import MesuresPLFSS from './MesuresPLFSS';
 import { downloadCsv } from '../lib/csv';
 import { contextLabels } from '../lib/labels';
+import { publicUrl } from '../lib/publicUrl';
 
 interface ContextRow {
   cle: string;
@@ -61,7 +62,7 @@ export default function BudgetContext() {
             <p className="sub">
               {r.perimetre} · {r.annee} ·{' '}
               <a
-                href={`/sources/l17b3210_projet-loi.pdf#page=${r.source_page}`}
+                href={publicUrl(`sources/l17b3210_projet-loi.pdf#page=${r.source_page}`)}
                 target="_blank"
                 rel="noreferrer"
               >

@@ -6,7 +6,7 @@ Prototype React/TypeScript + DuckDB-WASM, à partir des PDF locaux PLF/PLFSS 202
 
 Prérequis : Node 22.18+ (tests TypeScript natifs), npm, Python 3.10+, `pdfplumber`, `websocket-client` et Chromium pour les tests headless.
 
-Les deux PDF non versionnés doivent être présents à la racine du dépôt :
+Les deux PDF sources sont versionnés à la racine afin que le build de publication GitHub Pages puisse régénérer et servir les mêmes données :
 
 - `l17b3210_projet-loi.pdf` ;
 - `plfss_2027_texte.pdf`.
@@ -24,11 +24,11 @@ npm run dev
 ## Validation
 
 ```bash
-npm test                 # 5 tests : formatage, évolution, contraste, CSV
-npm run test:data       # 5 régressions sur le PDF réel local
+npm test                 # 7 tests unitaires : formatage, contraste, treemap et CSV
+npm run test:data       # 11 tests de cohérence des données
 npm run lint
 npm run build:publication
-npm run test:headless   # 81 contrôles sur le build servi en statique
+npm run test:headless   # 113 contrôles sur le build servi en statique
 # si le port par défaut 8901 est occupé :
 python3 ../scripts/validate_headless.py --port 8928
 ```
@@ -55,10 +55,10 @@ npm run build:publication
 npm run preview -- --host 127.0.0.1
 ```
 
-Publier **tout `dist/`**, y compris `data/`, `sources/` et `duckdb/`, sur un hébergement HTTPS à la **racine du domaine** (les chemins sont absolus). Servir `.wasm` avec `application/wasm`, `.js` avec un type JavaScript, `.pdf` avec `application/pdf`. Le worker et le WASM doivent rester sur la même origine. Aucun routage serveur spécial : la méthodologie utilise un paramètre de requête et les missions un fragment d’URL.
+Publier **tout `dist/`**, y compris `data/`, `sources/` et `duckdb/`. Les URLs respectent `BASE_URL` : le build local cible la racine, tandis que le workflow Pages utilise `/comprendrebudget2027/`. Servir `.wasm` avec `application/wasm`, `.js` avec un type JavaScript, `.pdf` avec `application/pdf`. Le worker et le WASM doivent rester sur la même origine. Aucun routage serveur spécial : les vues utilisent des paramètres de requête et les missions un fragment d’URL.
 
 Vérifier les droits de redistribution des PDF et garder le bandeau de démonstration. Ne pas conserver les CSV avec un cache immutable : leurs chemins ne sont pas versionnés. Les assets hachés peuvent être mis en cache longtemps.
 
-**Aucun déploiement distant n’est effectué automatiquement.** Il reste à choisir l’hébergeur et à réaliser les tests utilisateurs et l’audit manuel RGAA. Les contrôles axe-core automatisés ne constituent pas une certification.
+Le workflow `../.github/workflows/deploy-pages.yml` teste, construit et déploie automatiquement `main` sur GitHub Pages. URL du site : https://egwada.github.io/comprendrebudget2027/. La source Pages du dépôt doit être configurée sur **GitHub Actions**. Il reste à réaliser les tests utilisateurs et l’audit manuel RGAA ; les contrôles axe-core automatisés ne constituent pas une certification.
 
 Documentation : `../docs/validation.md`, `../docs/methodologie-budget.md`, `../docs/contrat-donnees.md`, `../docs/roadmap-dashboard-citoyen.md`.

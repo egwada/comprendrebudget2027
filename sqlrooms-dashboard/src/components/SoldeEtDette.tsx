@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { query } from '../duckdb';
 import { downloadCsv } from '../lib/csv';
+import { publicUrl } from '../lib/publicUrl';
 
 interface BalanceRow {
   annee: number;
@@ -498,7 +499,7 @@ export default function SoldeEtDette() {
             synthèse p. 6 et tableau 1, p. 14–15 (pagination imprimée), données AFT. Les valeurs
             d’intérêts et de charge totale ne sont publiées ici que pour 2023 et 2024 ; les cases antérieures restent
             vides et ne valent pas zéro.{' '}
-            <a href="/sources/neb-2024-gestion-dette-tresorerie-etat.pdf" target="_blank" rel="noreferrer">
+            <a href={publicUrl('sources/neb-2024-gestion-dette-tresorerie-etat.pdf')} target="_blank" rel="noreferrer">
               Consulter le rapport source (PDF, nouvel onglet)
             </a>
           </p>
